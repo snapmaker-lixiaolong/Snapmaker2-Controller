@@ -578,6 +578,7 @@ ErrCode CanHost::InitModules(MAC_t &mac) {
   for (i = 0; static_modules[i] != NULL; i++) {
     if (static_modules[i]->device_id() == device_id) {
       mac.bits.type = MODULE_TYPE_STATIC;
+      LOG_I("It's %s module\n", "static");
 
       ret = static_modules[i]->Init(mac, mac_index);
       if (ret == E_SUCCESS) {
@@ -588,6 +589,7 @@ ErrCode CanHost::InitModules(MAC_t &mac) {
     }
   }
 
+  LOG_I("It's %s module\n", "dynamic");
   // it is dynamic modules
   ret = InitDynamicModule(mac, mac_index);
   if (ret == E_SUCCESS) {
@@ -788,6 +790,8 @@ ErrCode CanHost::UpgradeModules(uint32_t fw_addr, uint32_t length) {
 
   CanPacket_t pkt = {CAN_CH_2, CAN_FRAME_EXT_REMOTE, 0x01, 0, 0};
 
+
+
   LOG_I("Scanning modules ...\n");
 
   if (can.Write(pkt) != E_SUCCESS)
@@ -796,7 +800,6 @@ ErrCode CanHost::UpgradeModules(uint32_t fw_addr, uint32_t length) {
   pkt.ch = CAN_CH_1;
   if (can.Write(pkt) != E_SUCCESS)
     LOG_E("No module on CAN%u!\n", 1);
-
 
   return E_SUCCESS;
 }

@@ -268,9 +268,10 @@ uint32_t ABL_TEMP_POINTS_Y;
  */
 
 void reset_homeoffset() {
-  float s_home_offset_def[XN] = S_HOME_OFFSET_DEFAULT;
-  float m_home_offset_def[XN] = M_HOME_OFFSET_DEFAULT;
-  float l_home_offset_def[XN] = L_HOME_OFFSET_DEFAULT;
+  float s_home_offset_def[XYZ] = S_HOME_OFFSET_DEFAULT;
+  float m_home_offset_def[XYZ] = M_HOME_OFFSET_DEFAULT;
+  float l_home_offset_def[XYZ] = L_HOME_OFFSET_DEFAULT;
+  float tmp_offset[XYZ] = L_HOME_OFFSET_DEFAULT_DUAL_EXTRUDER;
 
   LOOP_XN(i) {
     s_home_offset[i] = s_home_offset_def[i];
@@ -287,7 +288,12 @@ void reset_homeoffset() {
         home_offset[i] = m_home_offset[i];
         break;
       case MACHINE_SIZE_A350:
-        home_offset[i] = l_home_offset[i];
+        if (printer1->device_id() == MODULE_DEVICE_ID_3DP_DUAL) {
+          home_offset[i] = tmp_offset[i];
+        }
+        else {
+          home_offset[i] = l_home_offset[i];
+        }
         break;
       default:
         break;
