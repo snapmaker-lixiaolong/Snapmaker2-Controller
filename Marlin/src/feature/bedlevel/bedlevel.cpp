@@ -125,6 +125,28 @@ void set_bed_leveling_enabled(const bool enable/*=true*/) {
 
 #endif // ENABLE_LEVELING_FADE_HEIGHT
 
+void apply_active_extruder_leveling_data(uint8_t active_extruder) {
+  if (active_extruder >= EXTRUDERS) return;
+
+  for (uint8_t x = 0; x < GRID_MAX_POINTS_X; x++) {
+    for (uint8_t y = 0; y < GRID_MAX_POINTS_Y; y++) {
+      z_values[x][y] = extruders_z_values[active_extruder][x][y];
+      #if ENABLED(EXTENSIBLE_UI)
+        ExtUI::onMeshUpdate(x, y, 0);
+      #endif
+    }
+  }
+
+  for (uint8_t x = 0; x < GRID_MAX_POINTS_X; x++) {
+    for (uint8_t y = 0; y < GRID_MAX_POINTS_Y; y++) {
+      z_values_virt[x][y] = extruders_z_values_virt[active_extruder][x][y];
+      #if ENABLED(EXTENSIBLE_UI)
+        ExtUI::onMeshUpdate(x, y, 0);
+      #endif
+    }
+  }
+}
+
 /**
  * Reset calibration results to zero.
  */
