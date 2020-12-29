@@ -30,8 +30,14 @@
 #define TOOLHEAD_3DP_FAN_MAX      (2)
 #define TOOLHEAD_3DP_EXTRUDER_MAX (2)
 
-#define TOOLHEAD_3DP_EXTRUDER0    (1)
-#define TOOLHEAD_3DP_EXTRUDER1    (0)
+#define TOOLHEAD_3DP_EXTRUDER0    (0)
+#define TOOLHEAD_3DP_EXTRUDER1    (1)
+
+typedef enum {
+  PROBE_SENSOR_EXTRUDER0 = 0,
+  PROBE_SENSOR_EXTRUDER1 = 1,
+  PROBE_SENSOR_MAIN      = 2,
+}PROBE_SENSOR_T;
 
 class ToolHead3DP: public ModuleBase {
   public:
@@ -56,6 +62,7 @@ class ToolHead3DP: public ModuleBase {
     ErrCode Init(MAC_t &mac, uint8_t mac_index);
 
     ErrCode SetFan(uint8_t fan_index, uint8_t speed, uint8_t delay_time=0);
+    void SetProbeSensor(uint8_t sensor);
     ErrCode SetPID(uint8_t index, float value, uint8_t extrude_index=0);
     ErrCode SetHeater(uint16_t target_temp, uint8_t extrude_index=0);
     ErrCode SwitchExtruder(uint8_t extrude_index);

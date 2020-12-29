@@ -120,13 +120,17 @@ float destination[X_TO_E]; // = { 0 }
 // The active extruder (tool). Set with T<extruder> command.
 #if EXTRUDERS > 1
   uint8_t active_extruder; // = 0
+  uint8_t active_probe_sensor;  // = 0
+  float switch_stroke_extruder0 = SWITCH_STROKE_EXTRUDER0;
+  float switch_stroke_extruder1 = SWITCH_STROKE_EXTRUDER1;
 #endif
 
 // Extruder offsets
 #if HAS_HOTEND_OFFSET
   float hotend_offset[XYZ][HOTENDS]; // Initialized by settings.load()
+  float hotend_offset_z_temp;
   void reset_hotend_offsets() {
-    constexpr float tmp[XYZ][HOTENDS] = { HOTEND_OFFSET_X, HOTEND_OFFSET_Y, HOTEND_OFFSET_Z };
+    constexpr float tmp[XYZ][HOTENDS] = DEFAULT_HOTEND_OFFSETS;
     static_assert(
       tmp[X_AXIS][0] == 0 && tmp[Y_AXIS][0] == 0 && tmp[Z_AXIS][0] == 0,
       "Offsets for the first hotend must be 0.0."
@@ -1466,7 +1470,7 @@ void homeaxis(const AxisEnum axis) {
     #else
       maxlen = 1.5f * max_length(axis);
     #endif
-    
+
     do_homing_move(axis, 1.5f * maxlen * axis_home_dir);
   }
 
@@ -1746,4 +1750,10 @@ void  move_to_limited_position(const float (&target)[X_TO_E], const float fr_mm_
     current_position[E_AXIS] = target[E_AXIS];
     line_to_current_position(z_feedrate);
   }
+}
+
+void get_destination_from_logic(float (&logic_position)[X_TO_E]) {
+    LOOP_X_TO_E(i) {
+      destination[i] = (relative_mode || relative_mode) ? current_position[i] + logic_position[i] : (i == E_AXIS) ? logic_position[i] : LOGICAL_TO_NATIVE(logic_position[i], i);
+    }
 }

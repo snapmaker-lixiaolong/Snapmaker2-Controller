@@ -407,11 +407,8 @@ MachineSize Linear::UpdateMachineSize() {
     Z_HOME_DIR = 1;
     Z_DIR = false;
 
-<<<<<<< HEAD
     LOOP_XN(i) home_offset[i] = l_home_offset[i];
 
-=======
->>>>>>> 5dc7310dc... Feature: implement module manager for dual-extruder and others
     X_DEF_SIZE = 320;
     Y_DEF_SIZE = 340;
     Z_DEF_SIZE = 330; // unused & spec is lager than actual size.  334 - 6 = 328?

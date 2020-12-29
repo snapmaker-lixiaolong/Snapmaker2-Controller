@@ -34,6 +34,9 @@
 #define DEBUG_OUT ENABLED(DEBUG_LEVELING_FEATURE)
 #include "../core/debug_out.h"
 
+#include "../../../snapmaker/src/module/module_base.h"
+#include "../../../snapmaker/src/module/can_host.h"
+
 #if EXTRUDERS > 1
   toolchange_settings_t toolchange_settings;  // Initialized by settings.load()
 #endif
@@ -80,6 +83,18 @@
 #if HAS_LCD_MENU
   #include "../lcd/ultralcd.h"
 #endif
+
+
+#if EXTRUDERS > 1
+  float lift_switch_left_position;
+  float lift_switch_right_position;
+
+  void reset_tool_change_params (){
+    lift_switch_left_position = DEFAULT_LIFT_SWITCH_LEFT_POSITION;
+    lift_switch_right_position = DEFAULT_LIFT_SWITCH_RIGHT_POSITION;
+  }
+#endif
+
 
 #if DO_SWITCH_EXTRUDER
 
@@ -674,6 +689,19 @@ void tool_change(const uint8_t tmp_extruder, const float fr_mm_s/*=0.0*/, bool n
           planner.buffer_line(current_position, feedrate_mm_s, active_extruder);
         #endif
         planner.synchronize();
+
+        #if ENABLED(LIFT_SWITCH_NOZZLE)
+          if (tmp_extruder == 0) {
+            current_position[X_AXIS] = lift_switch_left_position;
+            //NOLESS(current_position[X_AXIS], soft_endstop[X_AXIS].max);
+          }
+          else if (tmp_extruder == 1) {
+            current_position[X_AXIS] = lift_switch_right_position;
+            //NOMORE(current_position[X_AXIS], soft_endstop[X_AXIS].max);
+          }
+          planner.buffer_line(current_position, feedrate_mm_s, active_extruder);
+          planner.synchronize();
+        #endif
       }
 
       #if HAS_HOTEND_OFFSET
@@ -687,6 +715,8 @@ void tool_change(const uint8_t tmp_extruder, const float fr_mm_s/*=0.0*/, bool n
       #else
         constexpr float xdiff = 0, ydiff = 0, zdiff = 0;
       #endif
+
+      LOG_I("xdiff: %f, ydiff: %f, zdiff: %f\n", xdiff, ydiff, zdiff);
 
       #if ENABLED(DUAL_X_CARRIAGE)
         dualx_tool_change(tmp_extruder, no_move);
@@ -803,6 +833,8 @@ void tool_change(const uint8_t tmp_extruder, const float fr_mm_s/*=0.0*/, bool n
           planner.set_e_position_mm((destination[E_AXIS] = current_position[E_AXIS] = resume_eaxis));
         }
       #endif
+
+      printer1->SwitchExtruder(tmp_extruder);
 
     } // (tmp_extruder != active_extruder)
 

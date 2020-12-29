@@ -43,11 +43,7 @@
 extern ToolHead3DP printer_single;
 extern ToolHead3DP printer_dual;
 
-<<<<<<< HEAD
-ModuleBase *static_modules[] = {&linear, &printer_single, &laser, &cnc, &enclosure, &emergency_stop, &linear_tmc, &rotaryModule, NULL};
-=======
-ModuleBase *static_modules[] = {&linear, &printer_single, &laser, &cnc, &enclosure, &printer_dual, NULL};
->>>>>>> 5dc7310dc... Feature: implement module manager for dual-extruder and others
+ModuleBase *static_modules[] = {&linear, &printer_single, &laser, &cnc, &enclosure, &emergency_stop, &linear_tmc, &rotaryModule, &printer_dual, NULL};
 
 bool ModuleBase::lock_marlin_uart_ = false;
 LockMarlinUartSource ModuleBase::lock_marlin_source_ = LOCK_SOURCE_NONE;

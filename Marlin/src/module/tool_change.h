@@ -38,6 +38,11 @@
 
   extern toolchange_settings_t toolchange_settings;
 
+  extern float lift_switch_left_position;
+  extern float lift_switch_right_position;
+
+  void reset_tool_change_params ();
+
 #endif
 
 #if DO_SWITCH_EXTRUDER

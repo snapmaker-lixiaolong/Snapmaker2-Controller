@@ -35,10 +35,382 @@
 #include "src/feature/bedlevel/abl/abl.h"
 #include "src/feature/bedlevel/bedlevel.h"
 
+#include "src/module/tool_change.h"
+
 BedLevelService levelservice;
 
 extern uint32_t GRID_MAX_POINTS_X;
 extern uint32_t GRID_MAX_POINTS_Y;
+
+ErrCode BedLevelService::DoXCalibration(SSTP_Event_t &event) {
+  ErrCode err = E_SUCCESS;
+
+  if ((MODULE_TOOLHEAD_3DP == ModuleBase::toolhead()) && (printer1->device_id() == MODULE_DEVICE_ID_3DP_DUAL)) {
+    process_cmd_imd("M104 T0 S205");
+    process_cmd_imd("M104 T1 S205");
+    process_cmd_imd("M140 S70");
+
+    if (!all_axes_homed()) {
+      process_cmd_imd("G28");
+    }
+
+    process_cmd_imd("G90"); //absolute positioning
+
+    tool_change(TOOLHEAD_3DP_EXTRUDER0);
+
+    process_cmd_imd("M109 T0 S205");
+    process_cmd_imd("M109 T1 S205");
+    process_cmd_imd("M190 S70");
+
+    feedrate_mm_s = MMM_TO_MMS(1080.0f);
+
+    float destination_position_logic[X_TO_E];
+    float start_point[XYZ] = X_CALIBRATION_A350_START_POINT_XYZ;
+
+    process_cmd_imd("G92 E0");
+    destination_position_logic[X_AXIS] = start_point[X_AXIS];
+    destination_position_logic[Y_AXIS] = start_point[Y_AXIS];
+    destination_position_logic[Z_AXIS] = start_point[Z_AXIS];
+    destination_position_logic[E_AXIS] = 0;
+    if (current_position[Z_AXIS] < 30) {
+      do_blocking_move_to_logical_z(30, 30);
+    }
+    do_blocking_move_to_logical_xy(destination_position_logic[X_AXIS], destination_position_logic[Y_AXIS], 80);
+    do_blocking_move_to_logical_z(destination_position_logic[Z_AXIS], 10);
+
+    process_cmd_imd("G92 E0");
+    destination_position_logic[X_AXIS] = start_point[X_AXIS];
+    destination_position_logic[Y_AXIS] = start_point[Y_AXIS] + X_CALIBRATION_LEFT_RIGHT_LINE_LENGTH;
+    destination_position_logic[Z_AXIS] = start_point[Z_AXIS];
+    destination_position_logic[E_AXIS] = X_CALIBRATION_LEFT_RIGHT_LINE_LENGTH * E_MOVES_FACTOR;
+    get_destination_from_logic(destination_position_logic);
+    prepare_move_to_destination();
+
+    process_cmd_imd("G92 E0");
+    destination_position_logic[X_AXIS] = start_point[X_AXIS] + X_CALIBRATION_UP_DOWN_LINE_LENGTH;
+    destination_position_logic[Y_AXIS] = start_point[Y_AXIS] + X_CALIBRATION_LEFT_RIGHT_LINE_LENGTH;
+    destination_position_logic[Z_AXIS] = start_point[Z_AXIS];
+    destination_position_logic[E_AXIS] = X_CALIBRATION_UP_DOWN_LINE_LENGTH * E_MOVES_FACTOR;
+    get_destination_from_logic(destination_position_logic);
+    prepare_move_to_destination();
+
+    // retractiong
+    destination_position_logic[E_AXIS] -= E_RETACTION_LENGTH;
+    get_destination_from_logic(destination_position_logic);
+    prepare_move_to_destination();
+
+    uint32_t i;
+    float main_line_y_start_postion = start_point[Y_AXIS] + X_CALIBRATION_LEFT_RIGHT_LINE_LENGTH/2 + MAIN_SUB_SAFE_DISTANCE;
+    for (i = 0; i < MAIN_SCALE_LINES; i++) {
+      destination_position_logic[X_AXIS] = start_point[X_AXIS] + FIRST_SCALE_LINE_TO_BORDER + i * MAIN_SCALE_LINE_INTERVAL;
+      destination_position_logic[Y_AXIS] = main_line_y_start_postion;
+      destination_position_logic[Z_AXIS] = start_point[Z_AXIS];
+      destination_position_logic[E_AXIS] += E_RETACTION_LENGTH;
+      do_blocking_move_to_logical_xy(destination_position_logic[X_AXIS], destination_position_logic[Y_AXIS], 80);
+      get_destination_from_logic(destination_position_logic);
+      prepare_move_to_destination();
+
+      float print_line_length = 0.0;
+      if (i == SCALE_0_LINE_NUMBER) {
+        print_line_length = SCALE_0_LINE_LENGTH;
+      }
+      else if (i%SCALE_LONGER_LINE_SEQUENCE == 0) {
+        print_line_length = SCALE_LINE_LENGTH_LONGER;
+      }
+      else {
+        print_line_length = SCALE_LINE_LENGHT_NORMAL;
+      }
+
+      process_cmd_imd("G92 E0");
+      destination_position_logic[Y_AXIS] = main_line_y_start_postion + print_line_length;
+      destination_position_logic[E_AXIS] = print_line_length * E_MOVES_FACTOR;
+      get_destination_from_logic(destination_position_logic);
+      prepare_move_to_destination();
+
+      // retraction
+      destination_position_logic[E_AXIS] -= E_RETACTION_LENGTH;
+      get_destination_from_logic(destination_position_logic);
+      prepare_move_to_destination();
+    }
+
+    tool_change(TOOLHEAD_3DP_EXTRUDER1);
+
+    destination_position_logic[X_AXIS] = start_point[X_AXIS];
+    destination_position_logic[Y_AXIS] = start_point[Y_AXIS];
+    destination_position_logic[Z_AXIS] = start_point[Z_AXIS];
+    destination_position_logic[E_AXIS] = 0;
+    do_blocking_move_to_logical_xy(destination_position_logic[X_AXIS], destination_position_logic[Y_AXIS], 80);
+
+    process_cmd_imd("G92 E0");
+    destination_position_logic[X_AXIS] = start_point[X_AXIS] + X_CALIBRATION_UP_DOWN_LINE_LENGTH;
+    destination_position_logic[Y_AXIS] = start_point[Y_AXIS];
+    destination_position_logic[Z_AXIS] = start_point[Z_AXIS];
+    destination_position_logic[E_AXIS] = X_CALIBRATION_UP_DOWN_LINE_LENGTH * E_MOVES_FACTOR ;
+    get_destination_from_logic(destination_position_logic);
+    prepare_move_to_destination();
+
+    process_cmd_imd("G92 E0");
+    destination_position_logic[X_AXIS] = start_point[X_AXIS] + X_CALIBRATION_UP_DOWN_LINE_LENGTH;
+    destination_position_logic[Y_AXIS] = start_point[Y_AXIS] + X_CALIBRATION_LEFT_RIGHT_LINE_LENGTH;
+    destination_position_logic[Z_AXIS] = start_point[Z_AXIS];
+    destination_position_logic[E_AXIS] = X_CALIBRATION_LEFT_RIGHT_LINE_LENGTH * E_MOVES_FACTOR;
+    get_destination_from_logic(destination_position_logic);
+    prepare_move_to_destination();
+
+    // retraction
+    destination_position_logic[E_AXIS] -= E_RETACTION_LENGTH;
+    get_destination_from_logic(destination_position_logic);
+    prepare_move_to_destination();
+
+    float sub_line_y_star_position = start_point[Y_AXIS] + X_CALIBRATION_LEFT_RIGHT_LINE_LENGTH/2 - MAIN_SUB_SAFE_DISTANCE;
+    for (i = 0; i < SUB_SCALE_LINES; i++) {
+      destination_position_logic[X_AXIS] = start_point[X_AXIS] + FIRST_SCALE_LINE_TO_BORDER + SCALE_0_LINE_NUMBER * MAIN_SCALE_LINE_INTERVAL + i * SUB_SCALE_LINE_INTERVAL;
+      destination_position_logic[Y_AXIS] = sub_line_y_star_position;
+      destination_position_logic[Z_AXIS] = start_point[Z_AXIS];
+      destination_position_logic[E_AXIS] += E_RETACTION_LENGTH;
+      do_blocking_move_to_logical_xy(destination_position_logic[X_AXIS], destination_position_logic[Y_AXIS], 80);
+
+      get_destination_from_logic(destination_position_logic);
+      prepare_move_to_destination();
+
+      float print_line_length = 0.0;
+      if (i%SCALE_LONGER_LINE_SEQUENCE == 0) {
+        print_line_length = SCALE_LINE_LENGTH_LONGER;
+      }
+      else {
+        print_line_length = SCALE_LINE_LENGHT_NORMAL;
+      }
+
+      process_cmd_imd("G92 E0");
+      destination_position_logic[Y_AXIS] = sub_line_y_star_position - print_line_length;
+      destination_position_logic[E_AXIS] = print_line_length * E_MOVES_FACTOR;
+      get_destination_from_logic(destination_position_logic);
+      prepare_move_to_destination();
+
+      // retraction
+      destination_position_logic[E_AXIS] -= E_RETACTION_LENGTH;
+      get_destination_from_logic(destination_position_logic);
+      prepare_move_to_destination();
+    }
+
+    do_blocking_move_to_logical_z(100, 40);
+    process_cmd_imd("M104 T0 S170");
+    process_cmd_imd("M104 T1 S170");
+    process_cmd_imd("M140 S40");
+  }
+
+  return err;
+}
+
+ErrCode BedLevelService::ApplyXCalibration(SSTP_Event_t &event) {
+  if (event.length != 2) {
+    return E_PARAM;
+  }
+
+  // save x direction hotend_offset
+  signed char cross_0_scale_lines = (signed char)event.data[0];
+  uint8_t sub_alignment_line_number = event.data[1];
+  float main_measurement_unit_offset = 0.0;
+  float main_sub_0_scale_line_distance = 0.0;
+
+  if (cross_0_scale_lines >= 0) {
+    main_measurement_unit_offset = sub_alignment_line_number * SCALE_MEASUREMENT_ACCURACY;
+    main_sub_0_scale_line_distance = (cross_0_scale_lines - 1) * MAIN_SCALE_LINE_INTERVAL + main_measurement_unit_offset;
+  }
+  else {
+    main_measurement_unit_offset = sub_alignment_line_number * SCALE_MEASUREMENT_ACCURACY;
+    main_sub_0_scale_line_distance = cross_0_scale_lines * MAIN_SCALE_LINE_INTERVAL + main_measurement_unit_offset;
+  }
+
+  hotend_offset[X_AXIS][TOOLHEAD_3DP_EXTRUDER1] += main_sub_0_scale_line_distance;
+  settings.save();
+
+  return E_SUCCESS;
+}
+
+
+ErrCode BedLevelService::DoYCalibration(SSTP_Event_t &event) {
+  ErrCode err = E_SUCCESS;
+
+  if ((MODULE_TOOLHEAD_3DP == ModuleBase::toolhead()) && (printer1->device_id() == MODULE_DEVICE_ID_3DP_DUAL)) {
+    process_cmd_imd("M104 T0 S205");
+    process_cmd_imd("M104 T1 S205");
+    process_cmd_imd("M140 S70");
+
+    if (!all_axes_homed()) {
+      process_cmd_imd("G28");
+    }
+
+    process_cmd_imd("G90"); //absolute positioning
+
+    tool_change(TOOLHEAD_3DP_EXTRUDER0);
+
+    process_cmd_imd("M109 T0 S205");
+    process_cmd_imd("M109 T1 S205");
+    process_cmd_imd("M190 S70");
+
+    feedrate_mm_s = MMM_TO_MMS(1080.0f);
+
+    float destination_position_logic[X_TO_E];
+    float start_point[XYZ] = Y_CALIBRATION_A350_START_POINT_XYZ;
+
+    destination_position_logic[X_AXIS] = start_point[X_AXIS];
+    destination_position_logic[Y_AXIS] = start_point[Y_AXIS];
+    destination_position_logic[Z_AXIS] = start_point[Z_AXIS];
+    destination_position_logic[E_AXIS] = 0;
+    if (current_position[Z_AXIS] < 30) {
+      do_blocking_move_to_logical_z(30, 30);
+    }
+    do_blocking_move_to_logical_xy(destination_position_logic[X_AXIS], destination_position_logic[Y_AXIS], 80);
+    do_blocking_move_to_logical_z(destination_position_logic[Z_AXIS], 10);
+
+    process_cmd_imd("G92 E0");
+    destination_position_logic[X_AXIS] = start_point[X_AXIS];
+    destination_position_logic[Y_AXIS] = start_point[Y_AXIS] + Y_CALIBRATION_LEFT_RIGHT_LINE_LENGTH;
+    destination_position_logic[Z_AXIS] = start_point[Z_AXIS];
+    destination_position_logic[E_AXIS] = Y_CALIBRATION_LEFT_RIGHT_LINE_LENGTH * E_MOVES_FACTOR;
+    get_destination_from_logic(destination_position_logic);
+    prepare_move_to_destination();
+
+    process_cmd_imd("G92 E0");
+    destination_position_logic[X_AXIS] = start_point[X_AXIS] + Y_CALIBRATION_UP_DOWN_LINE_LENGTH;
+    destination_position_logic[Y_AXIS] = start_point[Y_AXIS] + Y_CALIBRATION_LEFT_RIGHT_LINE_LENGTH;
+    destination_position_logic[Z_AXIS] = start_point[Z_AXIS];
+    destination_position_logic[E_AXIS] = Y_CALIBRATION_UP_DOWN_LINE_LENGTH * E_MOVES_FACTOR;
+    get_destination_from_logic(destination_position_logic);
+    prepare_move_to_destination();
+
+    // retraction
+    destination_position_logic[E_AXIS] -= E_RETACTION_LENGTH;
+    get_destination_from_logic(destination_position_logic);
+    prepare_move_to_destination();
+
+    uint32_t i;
+    float main_line_x_start_position = start_point[X_AXIS] + Y_CALIBRATION_UP_DOWN_LINE_LENGTH/2 - MAIN_SUB_SAFE_DISTANCE;
+    for (i = 0; i < MAIN_SCALE_LINES; i++) {
+      destination_position_logic[X_AXIS] = main_line_x_start_position;
+      destination_position_logic[Y_AXIS] = start_point[Y_AXIS] + FIRST_SCALE_LINE_TO_BORDER + i * MAIN_SCALE_LINE_INTERVAL;
+      destination_position_logic[Z_AXIS] = start_point[Z_AXIS];
+      destination_position_logic[E_AXIS] += E_RETACTION_LENGTH;
+      do_blocking_move_to_logical_xy(destination_position_logic[X_AXIS], destination_position_logic[Y_AXIS], 80);
+      get_destination_from_logic(destination_position_logic);
+      prepare_move_to_destination();
+
+      float print_line_length = 0.0;
+      if (i == SCALE_0_LINE_NUMBER) {
+        print_line_length = SCALE_0_LINE_LENGTH;
+      }
+      else if (i%SCALE_LONGER_LINE_SEQUENCE == 0) {
+        print_line_length = SCALE_LINE_LENGTH_LONGER;
+      }
+      else {
+        print_line_length = SCALE_LINE_LENGHT_NORMAL;
+      }
+
+      process_cmd_imd("G92 E0");
+      destination_position_logic[X_AXIS] = main_line_x_start_position - print_line_length;
+      destination_position_logic[E_AXIS] = print_line_length * E_MOVES_FACTOR;
+      get_destination_from_logic(destination_position_logic);
+      prepare_move_to_destination();
+
+      // retraction
+      destination_position_logic[E_AXIS] -= E_RETACTION_LENGTH;
+      get_destination_from_logic(destination_position_logic);
+      prepare_move_to_destination();
+    }
+
+    tool_change(TOOLHEAD_3DP_EXTRUDER1);
+
+    destination_position_logic[X_AXIS] = start_point[X_AXIS];
+    destination_position_logic[Y_AXIS] = start_point[Y_AXIS];
+    destination_position_logic[Z_AXIS] = start_point[Z_AXIS];
+    destination_position_logic[E_AXIS] = 0;
+    do_blocking_move_to_logical_xy(destination_position_logic[X_AXIS], destination_position_logic[Y_AXIS], 80);
+
+    process_cmd_imd("G92 E0");
+    destination_position_logic[X_AXIS] = start_point[X_AXIS] + Y_CALIBRATION_UP_DOWN_LINE_LENGTH;
+    destination_position_logic[Y_AXIS] = start_point[Y_AXIS];
+    destination_position_logic[Z_AXIS] = start_point[Z_AXIS];
+    destination_position_logic[E_AXIS] = Y_CALIBRATION_UP_DOWN_LINE_LENGTH * E_MOVES_FACTOR;
+    get_destination_from_logic(destination_position_logic);
+    prepare_move_to_destination();
+
+    process_cmd_imd("G92 E0");
+    destination_position_logic[X_AXIS] = start_point[X_AXIS] + Y_CALIBRATION_UP_DOWN_LINE_LENGTH;
+    destination_position_logic[Y_AXIS] = start_point[Y_AXIS] + Y_CALIBRATION_LEFT_RIGHT_LINE_LENGTH;
+    destination_position_logic[Z_AXIS] = start_point[Z_AXIS];
+    destination_position_logic[E_AXIS] = Y_CALIBRATION_LEFT_RIGHT_LINE_LENGTH * E_MOVES_FACTOR;
+    get_destination_from_logic(destination_position_logic);
+    prepare_move_to_destination();
+
+    // retration
+    destination_position_logic[E_AXIS] -= E_RETACTION_LENGTH;
+    get_destination_from_logic(destination_position_logic);
+    prepare_move_to_destination();
+
+    float sub_line_x_start_position = start_point[X_AXIS] + Y_CALIBRATION_UP_DOWN_LINE_LENGTH/2 + MAIN_SUB_SAFE_DISTANCE;
+    for (i = 0; i < SUB_SCALE_LINES; i++) {
+      destination_position_logic[X_AXIS] = sub_line_x_start_position;
+      destination_position_logic[Y_AXIS] = start_point[Y_AXIS] + FIRST_SCALE_LINE_TO_BORDER + SCALE_0_LINE_NUMBER * MAIN_SCALE_LINE_INTERVAL + i * SUB_SCALE_LINE_INTERVAL;
+      destination_position_logic[Z_AXIS] = start_point[Z_AXIS];
+      destination_position_logic[E_AXIS] += E_RETACTION_LENGTH;
+      do_blocking_move_to_logical_xy(destination_position_logic[X_AXIS], destination_position_logic[Y_AXIS], 80);
+      get_destination_from_logic(destination_position_logic);
+      prepare_move_to_destination();
+
+      float print_line_length = 0.0;
+      if (i%SCALE_LONGER_LINE_SEQUENCE == 0) {
+        print_line_length = SCALE_LINE_LENGTH_LONGER;
+      }
+      else {
+        print_line_length = SCALE_LINE_LENGHT_NORMAL;
+      }
+
+      process_cmd_imd("G92 E0");
+      destination_position_logic[X_AXIS] = sub_line_x_start_position + print_line_length;
+      destination_position_logic[E_AXIS] = print_line_length * E_MOVES_FACTOR;
+      get_destination_from_logic(destination_position_logic);
+      prepare_move_to_destination();
+
+      // retration
+      destination_position_logic[E_AXIS] -= E_RETACTION_LENGTH;
+      get_destination_from_logic(destination_position_logic);
+      prepare_move_to_destination();
+    }
+
+    do_blocking_move_to_logical_z(100, 40);
+    process_cmd_imd("M104 T0 S170");
+    process_cmd_imd("M104 T1 S170");
+    process_cmd_imd("M140 S50");
+  }
+
+  return err;
+}
+
+ErrCode BedLevelService::ApplyYCalibration(SSTP_Event_t &event) {
+  if (event.length != 2) {
+    return E_PARAM;
+  }
+  // save x direction hotend_offset
+  signed char cross_0_scale_lines = (signed char)event.data[0];
+  uint8_t sub_alignment_line_number = (uint8_t)event.data[1];
+  float main_measurement_unit_offset = 0.0;
+  float main_sub_0_scale_line_distance = 0.0;
+
+  if (cross_0_scale_lines >= 0) {
+    main_measurement_unit_offset = sub_alignment_line_number * SCALE_MEASUREMENT_ACCURACY;
+    main_sub_0_scale_line_distance = (cross_0_scale_lines - 1) * MAIN_SCALE_LINE_INTERVAL + main_measurement_unit_offset;
+  }
+  else {
+    main_measurement_unit_offset = sub_alignment_line_number * SCALE_MEASUREMENT_ACCURACY;
+    main_sub_0_scale_line_distance = cross_0_scale_lines * MAIN_SCALE_LINE_INTERVAL + main_measurement_unit_offset;
+  }
+
+  hotend_offset[Y_AXIS][TOOLHEAD_3DP_EXTRUDER1] += main_sub_0_scale_line_distance;
+  settings.save();
+
+  return E_SUCCESS;
+}
 
 ErrCode BedLevelService::DoAutoLeveling(SSTP_Event_t &event) {
   ErrCode err = E_FAILURE;
@@ -70,6 +442,11 @@ ErrCode BedLevelService::DoAutoLeveling(SSTP_Event_t &event) {
     live_z_offset_ = 0;
 
     process_cmd_imd("G28");
+
+    if (printer1->device_id() == MODULE_DEVICE_ID_3DP_DUAL) {
+      // switch to the left nozzle
+      tool_change(TOOLHEAD_3DP_EXTRUDER0);
+    }
 
     snprintf(cmd, 16, "G1029 P%u\n", grid);
     process_cmd_imd(cmd);
@@ -210,12 +587,22 @@ ErrCode BedLevelService::SetManualLevelingPoint(SSTP_Event_t &event) {
     LOG_I("SC req move to pont: %d\n", index);
   }
 
+  LOG_I("manual leveling pre, index:%d, manual_level_index_:%d\n", index, manual_level_index_);
   if ((index <= GRID_MAX_POINTS_INDEX) && (index > 0)) {
     // check point index
-    if (manual_level_index_ <= GRID_MAX_POINTS_INDEX) {
+    if (manual_level_index_ < GRID_MAX_POINTS_INDEX - 1) {
       // save point index
       MeshPointZ[manual_level_index_] = current_position[Z_AXIS];
       LOG_I("P[%d]: (%.2f, %.2f, %.2f)\n", manual_level_index_, current_position[X_AXIS], current_position[Y_AXIS], current_position[Z_AXIS]);
+
+      if (printer1->device_id() == MODULE_DEVICE_ID_3DP_DUAL) {
+        if (active_extruder == TOOLHEAD_3DP_EXTRUDER0) {
+          ExtrudersMeshPointZ[TOOLHEAD_3DP_EXTRUDER0][manual_level_index_] = MeshPointZ[manual_level_index_];
+        }
+        else if (active_extruder == TOOLHEAD_3DP_EXTRUDER1) {
+          ExtrudersMeshPointZ[TOOLHEAD_3DP_EXTRUDER1][manual_level_index_] = MeshPointZ[manual_level_index_];
+        }
+      }
 
       // if got new point, raise Z firstly
       if ((manual_level_index_ != index -1) && current_position[Z_AXIS] < z_position_before_calibration)
@@ -227,6 +614,7 @@ ErrCode BedLevelService::SetManualLevelingPoint(SSTP_Event_t &event) {
     do_blocking_move_to_logical_xy(_GET_MESH_X(manual_level_index_ % GRID_MAX_POINTS_X),
                     _GET_MESH_Y(manual_level_index_ / GRID_MAX_POINTS_Y), speed_in_calibration[X_AXIS]);
   }
+  LOG_I("manual leveling post, index:%d, manual_level_index_:%d\n", index, manual_level_index_);
 
   err = E_SUCCESS;
 
@@ -237,6 +625,21 @@ out:
   return hmi.Send(event);
 }
 
+ErrCode BedLevelService::SwitchToExtruder1ForBedLevel(SSTP_Event_t &event) {
+  ErrCode err = E_FAILURE;
+
+  MeshPointZ[manual_level_index_] = current_position[Z_AXIS];
+  ExtrudersMeshPointZ[TOOLHEAD_3DP_EXTRUDER0][manual_level_index_] = MeshPointZ[manual_level_index_];
+
+  tool_change(TOOLHEAD_3DP_EXTRUDER1);
+
+  err = E_SUCCESS;
+
+  event.data = &err;
+  event.length = 1;
+
+  return hmi.Send(event);
+}
 
 ErrCode BedLevelService::AdjustZOffsetInLeveling(SSTP_Event_t &event) {
   ErrCode err = E_FAILURE;
@@ -267,7 +670,6 @@ ErrCode BedLevelService::AdjustZOffsetInLeveling(SSTP_Event_t &event) {
   return hmi.Send(event);
 }
 
-
 ErrCode BedLevelService::SaveAndExitLeveling(SSTP_Event_t &event) {
   ErrCode err = E_SUCCESS;
 
@@ -290,10 +692,42 @@ ErrCode BedLevelService::SaveAndExitLeveling(SSTP_Event_t &event) {
     MeshPointZ[manual_level_index_] = current_position[Z_AXIS];
     LOG_I("P[%d]: (%.2f, %.2f, %.2f)\n", manual_level_index_,
         current_position[X_AXIS], current_position[Y_AXIS], current_position[Z_AXIS]);
-    for (j = 0; j < GRID_MAX_POINTS_Y; j++) {
-      for (i = 0; i < GRID_MAX_POINTS_X; i++) {
-        z_values[i][j] = MeshPointZ[j * GRID_MAX_POINTS_X + i];
+
+    if (printer1->device_id() == MODULE_DEVICE_ID_3DP_DUAL) {
+      if (active_extruder == TOOLHEAD_3DP_EXTRUDER0) {
+        ExtrudersMeshPointZ[TOOLHEAD_3DP_EXTRUDER0][manual_level_index_] = MeshPointZ[manual_level_index_];
       }
+      else if (active_extruder == TOOLHEAD_3DP_EXTRUDER1) {
+        ExtrudersMeshPointZ[TOOLHEAD_3DP_EXTRUDER1][manual_level_index_] = MeshPointZ[manual_level_index_];
+      }
+
+      for (j = 0; j < GRID_MAX_POINTS_Y; j++) {
+        for (i = 0; i < GRID_MAX_POINTS_X; i++) {
+          z_values[i][j] = ExtrudersMeshPointZ[TOOLHEAD_3DP_EXTRUDER0][j * GRID_MAX_POINTS_X + i];
+        }
+      }
+    }
+    else if (printer1->device_id() == MODULE_DEVICE_ID_3DP_SINGLE) {
+      for (j = 0; j < GRID_MAX_POINTS_Y; j++) {
+        for (i = 0; i < GRID_MAX_POINTS_X; i++) {
+          z_values[i][j] = MeshPointZ[j * GRID_MAX_POINTS_X + i];
+        }
+      }
+    }
+
+    if (printer1->device_id() == MODULE_DEVICE_ID_3DP_DUAL) {
+      #if ENABLED(PROBE_ALL_LEVELING_POINTS)
+        for (j = 0; j < GRID_MAX_POINTS_Y; j++) {
+          for (i = 0; i < GRID_MAX_POINTS_X; i++) {
+            extruders_z_values[TOOLHEAD_3DP_EXTRUDER0][i][j] = ExtrudersMeshPointZ[TOOLHEAD_3DP_EXTRUDER0][j * GRID_MAX_POINTS_X + i];
+            extruders_z_values[TOOLHEAD_3DP_EXTRUDER1][i][j] = ExtrudersMeshPointZ[TOOLHEAD_3DP_EXTRUDER1][j * GRID_MAX_POINTS_X + i];
+          }
+        }
+      #elif ENABLED(PROBE_LAST_LEVELING_POINT)
+        float temp_z = ExtrudersMeshPointZ[TOOLHEAD_3DP_EXTRUDER0][manual_level_index_] - ExtrudersMeshPointZ[TOOLHEAD_3DP_EXTRUDER1][manual_level_index_];
+        hotend_offset[Z_AXIS][TOOLHEAD_3DP_EXTRUDER1] = temp_z;
+        LOG_I("right nozzle higher than left nozzle by: %f\n", temp_z);
+      #endif
     }
 
     bed_level_virt_interpolate();
@@ -327,6 +761,13 @@ ErrCode BedLevelService::SaveAndExitLeveling(SSTP_Event_t &event) {
 
   // move to stop
   move_to_limited_z(z_limit_in_cali, XY_PROBE_FEEDRATE_MM_S/2);
+
+  if (printer1->device_id() == MODULE_DEVICE_ID_3DP_DUAL) {
+    hotend_offset[Z_AXIS][TOOLHEAD_3DP_EXTRUDER1] = 0;
+    tool_change(TOOLHEAD_3DP_EXTRUDER0);
+    hotend_offset[Z_AXIS][TOOLHEAD_3DP_EXTRUDER1] = hotend_offset_z_temp;
+  }
+
   planner.synchronize();
 
   // make sure we are in absolute mode
@@ -390,6 +831,8 @@ ErrCode BedLevelService::SyncPointIndex(uint8_t index) {
 
 
 ErrCode BedLevelService::UpdateLiveZOffset(float offset) {
+  LOG_I("old live_z_offset: %.3f\n", live_z_offset_);
+
   if (MODULE_TOOLHEAD_3DP != ModuleBase::toolhead()) {
     LOG_E("only enable z offset for 3DP!\n");
     return E_FAILURE;

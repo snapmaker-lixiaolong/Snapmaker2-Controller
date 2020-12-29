@@ -136,6 +136,11 @@ typedef struct SettingsDataStruct {
     float hotend_offset[XYZ][HOTENDS - 1];              // M218 XYZ
   #endif
 
+  #if EXTRUDERS > 1
+    float lift_switch_left_position;
+    float lift_switch_right_position;
+  #endif
+
   //
   // ENABLE_LEVELING_FADE_HEIGHT
   //
@@ -528,6 +533,14 @@ void MarlinSettings::postprocess() {
         for (uint8_t e = 1; e < HOTENDS; e++)
           LOOP_XYZ(i) EEPROM_WRITE(hotend_offset[i][e]);
       #endif
+    }
+
+    //
+    // tool change params
+    //
+    {
+      EEPROM_WRITE(lift_switch_left_position);
+      EEPROM_WRITE(lift_switch_right_position);
     }
 
     //
@@ -1275,6 +1288,14 @@ void MarlinSettings::postprocess() {
           for (uint8_t e = 1; e < HOTENDS; e++)
             LOOP_XYZ(i) EEPROM_READ(hotend_offset[i][e]);
         #endif
+      }
+
+      //
+      // tool change params
+      //
+      {
+        EEPROM_READ(lift_switch_left_position);
+        EEPROM_READ(lift_switch_right_position);
       }
 
       //
@@ -2116,6 +2137,10 @@ void MarlinSettings::reset() {
 
   #if HAS_HOTEND_OFFSET
     reset_hotend_offsets();
+  #endif
+
+  #if EXTRUDERS > 1
+    reset_tool_change_params();
   #endif
 
   #if EXTRUDERS > 1
@@ -3224,6 +3249,11 @@ void MarlinSettings::reset() {
       CONFIG_ECHO_START();
       M217_report(true);
     #endif
+
+    SERIAL_ECHOLNPAIR(
+        "  T0 L", LINEAR_UNIT(lift_switch_left_position)
+      , "  T1 R", LINEAR_UNIT(lift_switch_right_position)
+    );
   }
 
 #endif // !DISABLE_M503

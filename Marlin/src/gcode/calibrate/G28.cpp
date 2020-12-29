@@ -408,7 +408,7 @@ void GcodeSuite::G28(const bool always_home_all) {
       set_axis_is_at_home(B_AXIS);
     }
     sync_plan_position();
-  
+
   #endif // !DELTA (G28)
 
   /**

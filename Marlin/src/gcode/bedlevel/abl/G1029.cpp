@@ -27,6 +27,7 @@
 #include <src/feature/bedlevel/bedlevel.h>
 #include <src/module/endstops.h>
 #include <src/module/configuration_store.h>
+#include <src/module/motion.h>
 
 #include "../../../../../snapmaker/src/snapmaker.h"
 
@@ -72,6 +73,10 @@ extern float nozzle_height_probed;
  *          delta > 0 => we raise the reference point
  */
 void GcodeSuite::G1029() {
+  SSTP_Event_t event;
+  uint8_t level_points = 3;
+  uint8_t level_point_index = 1;
+
   const bool seen_p = parser.seenval('P');
   if (seen_p) {
     int size = parser.value_int();
@@ -84,12 +89,18 @@ void GcodeSuite::G1029() {
     GRID_MAX_POINTS_Y = size;
 
     bilinear_grid_manual();
+    // for (uint8_t x = 0; x < GRID_MAX_POINTS_X; x++) {
+    //   for (uint8_t y = 0; y < GRID_MAX_POINTS_Y; y++) {
+    //     z_values[x][y] = DEFAUT_LEVELING_HEIGHT;
+    //     #if ENABLED(EXTENSIBLE_UI)
+    //       ExtUI::onMeshUpdate(x, y, 0);
+    //     #endif
+    //   }
+    // }
+
     for (uint8_t x = 0; x < GRID_MAX_POINTS_X; x++) {
       for (uint8_t y = 0; y < GRID_MAX_POINTS_Y; y++) {
         z_values[x][y] = DEFAUT_LEVELING_HEIGHT;
-        #if ENABLED(EXTENSIBLE_UI)
-          ExtUI::onMeshUpdate(x, y, 0);
-        #endif
       }
     }
 
@@ -103,6 +114,23 @@ void GcodeSuite::G1029() {
     set_bed_leveling_enabled(true);
     SERIAL_ECHOLNPAIR("Set grid size : ", size);
     return;
+  }
+
+  const bool seen_c = parser.seen("C");
+  if (seen_c) {
+    int32_t z_offset = (int32_t)parser.intval('C', (int32_t)0);
+    uint8_t buff[5];
+    buff[0] = 4;
+    buff[1] = ((uint8_t *)&z_offset)[3];
+    buff[2] = ((uint8_t *)&z_offset)[2];
+    buff[3] = ((uint8_t *)&z_offset)[1];
+    buff[4] = ((uint8_t *)&z_offset)[0];
+
+    event.op_code = 0x0f;
+    event.data = buff;
+    event.length = 5;
+    event.id = 9;
+    systemservice.ChangeRuntimeEnv(event);
   }
 
   const bool seen_a = parser.seen("A");
@@ -130,6 +158,10 @@ void GcodeSuite::G1029() {
     if (opt_s == 0) {
       compensate_offset();
     }
+    else if (opt_s == 1) {
+      // don't need to compensate, because this has already been done
+      hotend_offset[Z_AXIS][TOOLHEAD_3DP_EXTRUDER1] = hotend_offset_z_temp;
+    }
     else {
       if (nozzle_height_probed <= 0 || nozzle_height_probed > MAX_NOZZLE_HEIGHT_PROBED) {
         LOG_E("invalid nozzle height after level: %.2f", nozzle_height_probed);
@@ -142,8 +174,7 @@ void GcodeSuite::G1029() {
     bed_level_virt_interpolate();
 
     // only save data in flash after adjusting z offset
-    if (opt_s == 0)
-      settings.save();
+    settings.save();
     return;
   }
 
@@ -173,5 +204,79 @@ void GcodeSuite::G1029() {
     }
     return;
   }
-}
 
+  const bool seen_b = parser.seen('B');
+  if (seen_b) {
+    planner.synchronize();   // wait until previous movement commands (G0/G0/G2/G3) have completed before playing with the spindle
+
+    level_points = (uint8_t)parser.byteval('B', (uint8_t)3);
+
+    event.op_code = 2;
+    event.data = &level_points;
+    event.length = 1;
+    event.id = 9;
+
+    levelservice.DoAutoLeveling(event);
+    return ;
+  }
+
+  const bool seen_m = parser.seen('M');
+  if (seen_m) {
+    level_points = (uint8_t)parser.byteval('M', (uint16_t)3);
+
+    event.op_code = 4;
+    event.data = &level_points;
+    event.length = 1;
+    event.id = 9;
+    levelservice.DoManualLeveling(event);
+  }
+
+  const bool seen_n = parser.seen('N');
+  if (seen_n) {
+    level_point_index = (uint8_t)parser.byteval('N', (uint8_t)1);
+
+    event.op_code = 5;
+    event.data = &level_point_index;
+    event.length = 1;
+    event.id = 9;
+    levelservice.SetManualLevelingPoint(event);
+  }
+
+  const bool seen_t = parser.seen('T');
+  if (seen_t) {
+    event.op_code = 0x11;
+    event.data = NULL;
+    event.length = 0;
+    event.id = 9;
+    levelservice.SwitchToExtruder1ForBedLevel(event);
+  }
+
+  const bool seen_f = parser.seen('F');
+  if (seen_f) {
+    event.op_code = 7;
+    event.data = NULL;
+    event.length = 0;
+    event.id = 9;
+    levelservice.SaveAndExitLeveling(event);
+  }
+
+  const bool seen_l = parser.seen('L');
+  if (seen_l) {
+    float switch_stroke_extruder0_new = (float)parser.floatval('L', (float)0);
+    compensate_offset(switch_stroke_extruder0_new - switch_stroke_extruder0);
+    switch_stroke_extruder0 = switch_stroke_extruder0_new;
+
+    event.op_code = 7;
+    event.data = NULL;
+    event.length = 0;
+    event.id = 9;
+    levelservice.SaveAndExitLeveling(event);
+  }
+
+  const bool seen_r = parser.seen('R');
+  if (seen_r) {
+    float switch_stroke_extruder1_new = (float)parser.floatval('R', (float)0);
+    hotend_offset[Z_AXIS][TOOLHEAD_3DP_EXTRUDER1] = hotend_offset[Z_AXIS][TOOLHEAD_3DP_EXTRUDER1] + switch_stroke_extruder1 - switch_stroke_extruder1_new;
+    switch_stroke_extruder1 = switch_stroke_extruder1_new;
+  }
+}

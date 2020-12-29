@@ -29,6 +29,7 @@
 #include "Configuration.h"
 #include "src/pins/pins.h"
 #include "src/inc/MarlinConfig.h"
+#include "src/module/motion.h"
 #include HAL_PATH(src/HAL, HAL.h)
 
 ToolHead3DP printer_single(MODULE_DEVICE_ID_3DP_SINGLE);
@@ -167,11 +168,13 @@ ErrCode ToolHead3DP::Init(MAC_t &mac, uint8_t mac_index) {
 
   LOG_I("\tprobe: 0x%x, filament: 0x%x\n", probe_state_, filament_state_);
 
+#if 0
   // enable extruder 0
   mesg_cmd.id     = msg_id_swtich_extruder_;
   mesg_cmd.length = 1;
   mesg_cmd.data   = &cur_extruder_;
   canhost.SendStdCmd(mesg_cmd);
+#endif
 
   LOG_I("\tprobe: 0x%x, filament: 0x%x\n", probe_state_, filament_state_);
 
@@ -191,6 +194,13 @@ void ToolHead3DP::SetProbeState(uint8_t state[]) {
       probe_state_ |= 0x02;
     else
       probe_state_ &= ~0x02;
+
+    if (state[2]) {
+      probe_state_ |= 0x04;
+    }
+    else {
+      probe_state_ &= ~0x04;
+    }
   }
   else {
     if (state[0])
@@ -201,8 +211,8 @@ void ToolHead3DP::SetProbeState(uint8_t state[]) {
 }
 
 
-bool ToolHead3DP::GetProbeState(uint8_t extruder) {
-  return (bool)(probe_state_ & (1<<extruder));
+bool ToolHead3DP::GetProbeState(uint8_t probe_sensor) {
+  return (bool)(probe_state_ & (1<<probe_sensor));
 }
 
 
@@ -254,6 +264,19 @@ ErrCode ToolHead3DP::SetFan(uint8_t fan_index, uint8_t speed, uint8_t delay_time
   return canhost.SendStdCmd(cmd, 0);
 }
 
+void ToolHead3DP::SetProbeSensor(uint8_t sensor) {
+  switch (sensor) {
+    case PROBE_SENSOR_EXTRUDER0:
+      active_probe_sensor = PROBE_SENSOR_EXTRUDER0;
+      break;
+    case PROBE_SENSOR_EXTRUDER1:
+      active_probe_sensor = PROBE_SENSOR_EXTRUDER1;
+      break;
+    case PROBE_SENSOR_MAIN:
+      active_probe_sensor = PROBE_SENSOR_MAIN;
+      break;
+  }
+}
 
 ErrCode ToolHead3DP::SetPID(uint8_t index, float value, uint8_t extrude_index) {
   CanStdFuncCmd_t cmd;
@@ -292,23 +315,42 @@ ErrCode ToolHead3DP::SetHeater(uint16_t target_temp, uint8_t extrude_index) {
     buffer[2*i + 1] = (uint8_t)target_temp_[i];
   }
 
-  if (target_temp >= 60) {
-    SetFan(1, 255);
-  }
+  uint8_t fan_index = 1;
+  uint8_t fan_speed = 0;
+  uint8_t fan_delay = 0;
 
-  // if we turn off heating
-  if (target_temp == 0) {
+  if (target_temp >= 60) {
+    fan_speed = 255;
+  }
+  else if (target_temp == 0) {
     // check if need to delay to turn off fan
     if (cur_temp_[extrude_index] >= 150) {
-      SetFan(1, 0, 120);
+      fan_speed = 0;
+      fan_delay = 120;
     }
     else if (cur_temp_[extrude_index] >= 60) {
-      SetFan(1, 0, 60);
+      fan_speed = 0;
+      fan_delay = 60;
     }
     else {
-      SetFan(1, 0);
+      fan_speed = 0;
+      fan_delay = 0;
     }
   }
+
+  if (printer1->device_id() == MODULE_DEVICE_ID_3DP_SINGLE) {
+    fan_index = 1;
+  }
+  else if (printer1->device_id() == MODULE_DEVICE_ID_3DP_DUAL) {
+    if (extrude_index == TOOLHEAD_3DP_EXTRUDER0) {
+      fan_index = 0;
+    }
+    else if (extrude_index == TOOLHEAD_3DP_EXTRUDER1) {
+      fan_index = 1;
+    }
+  }
+
+  SetFan(fan_index, fan_speed, fan_delay);
 
   cmd.id     = MODULE_FUNC_SET_NOZZLE_TEMP;
   cmd.data   = buffer;
@@ -319,7 +361,8 @@ ErrCode ToolHead3DP::SetHeater(uint16_t target_temp, uint8_t extrude_index) {
 
 
 ErrCode ToolHead3DP::SwitchExtruder(uint8_t extrude_index) {
-  CanStdMesgCmd_t cmd;
+  CanStdFuncCmd_t cmd;
+  uint8_t can_buffer[1];
 
   switch (extrude_index) {
   case 0:
@@ -334,18 +377,16 @@ ErrCode ToolHead3DP::SwitchExtruder(uint8_t extrude_index) {
     return E_PARAM;
   }
 
-  cmd.id      = msg_id_swtich_extruder_;
-  cmd.data    = &extrude_index;
-  cmd.length  = 1;
+  can_buffer[0] = extrude_index;
+  cmd.id        = MODULE_FUNC_SWITCH_EXTRUDER;
+  cmd.data      = can_buffer;
+  cmd.length    = 1;
 
-  return canhost.SendStdCmd(cmd);
+  return canhost.SendStdCmdSync(cmd, 10000);
 }
-
 
 void ToolHead3DP::Process() {
   if (++timer_in_process_ < 100) return;
 
   timer_in_process_ = 0;
-
-
 }

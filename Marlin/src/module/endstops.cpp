@@ -462,6 +462,7 @@ void _O2 Endstops::M119() {
     print_es_state(printer1->GetProbeState(0) != Z_MIN_PROBE_ENDSTOP_INVERTING, PSTR(MSG_Z_PROBE"0"));
     #if EXTRUDERS > 1
       print_es_state(printer1->GetProbeState(1) != Z_MIN_PROBE_ENDSTOP_INVERTING, PSTR(MSG_Z_PROBE"1"));
+      print_es_state(printer1->GetProbeState(2) != Z_MIN_PROBE_ENDSTOP_INVERTING, PSTR(MSG_Z_PROBE"2"));
     #endif
 
     print_es_state(printer1->GetFilamentState(0) != FIL_RUNOUT_INVERTING, PSTR(MSG_FILAMENT_RUNOUT_SENSOR"0"));
@@ -925,7 +926,7 @@ void _O2 Endstops::M119() {
     #if ENABLED(G38_PROBE_TARGET) && !(CORE_IS_XY || CORE_IS_XZ)
       #if (MOTHERBOARD == BOARD_SNAPMAKER_2_0)
         if (G38_move) {
-          if (printer1->GetProbeState(active_extruder) != Z_MIN_PROBE_ENDSTOP_INVERTING) {
+          if (printer1->GetProbeState(active_probe_sensor) != Z_MIN_PROBE_ENDSTOP_INVERTING) {
             SBI(live_state, Z_MIN_PROBE);
           }
           else {
@@ -1045,7 +1046,7 @@ void _O2 Endstops::M119() {
         UPDATE_ENDSTOP_BIT(Z, MIN);
       #elif ENABLED(SW_MACHINE_SIZE)
         if(Z_HOME_DIR < 0) {
-          if (printer1->GetProbeState(active_extruder) != Z_MIN_PROBE_ENDSTOP_INVERTING) {
+          if (printer1->GetProbeState(active_probe_sensor) != Z_MIN_PROBE_ENDSTOP_INVERTING) {
             SBI(live_state, Z_MIN_PROBE);
           }
           else {
@@ -1059,7 +1060,7 @@ void _O2 Endstops::M119() {
 
     // When closing the gap check the enabled probe
     #if USES_Z_MIN_PROBE_ENDSTOP || (MOTHERBOARD == BOARD_SNAPMAKER_2_0)
-      if (printer1->GetProbeState(active_extruder) != Z_MIN_PROBE_ENDSTOP_INVERTING) {
+      if (printer1->GetProbeState(active_probe_sensor) != Z_MIN_PROBE_ENDSTOP_INVERTING) {
         SBI(live_state, Z_MIN_PROBE);
       }
       else {

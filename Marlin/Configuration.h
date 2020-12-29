@@ -149,6 +149,49 @@
 // :[1, 2, 3, 4, 5, 6]
 #define EXTRUDERS 2
 
+#if EXTRUDERS > 1
+  #define DEFAULT_LIFT_SWITCH_LEFT_POSITION   15
+  #define DEFAULT_LIFT_SWITCH_RIGHT_POSITION  350
+  #define DEFAULT_NOZZLE0_MOTOR_RUNTIME       1000
+  #define DEFAULT_NOZZLE1_MOTOR_RUNTIME       2000
+
+  #define MAIN_SCALE_LINE_INTERVAL    2   // mm
+  #define SUB_SCALE_LINE_INTERVAL     1.9 // mm
+  #define SCALE_MEASUREMENT_ACCURACY  (MAIN_SCALE_LINE_INTERVAL - SUB_SCALE_LINE_INTERVAL)
+  #define MAIN_SCALE_LINES            41
+  #define SUB_SCALE_LINES             21
+  #define SCALE_0_LINE_NUMBER         5
+  #define SCALE_LONGER_LINE_SEQUENCE  5
+  #define MAIN_SUB_SAFE_DISTANCE      0.5 // mm
+  #define FIRST_SCALE_LINE_TO_BORDER  4   // mm
+
+  #define SCALE_0_LINE_LENGTH         20  // mm
+  #define SCALE_LINE_LENGTH_LONGER    15  // mm
+  #define SCALE_LINE_LENGHT_NORMAL    10  // mm
+
+  #define E_RETACTION_LENGTH          0.2 // mm
+
+  #define X_CALIBRATION_A350_START_POINT_XYZ {110.0, 180.0, 0.7}  // mm
+  #define X_CALIBRATION_A250_START_POINT_XYZ {140.0, 180.0, 0.2}
+  #define X_CALIBRATION_A150_START_POINT_XYZ {140.0, 180.0, 0.2}
+
+  #define Y_CALIBRATION_A350_START_POINT_XYZ {140.0, 80.0, 0.7}
+  #define Y_CALIBRATION_A250_START_POINT_XYZ {140.0, 110.0, 0.2}
+  #define Y_CALIBRATION_A150_START_POINT_XYZ {140.0, 110.0, 0.2}
+
+  #define X_CALIBRATION_LEFT_RIGHT_LINE_LENGTH  60  // mm
+  #define X_CALIBRATION_UP_DOWN_LINE_LENGTH     90  // mm
+  #define Y_CALIBRATION_LEFT_RIGHT_LINE_LENGTH  90  // mm
+  #define Y_CALIBRATION_UP_DOWN_LINE_LENGTH     60  // mm
+
+  #define E_MOVES_FACTOR  0.05 // 0.03326
+#endif
+
+#define PROBE_LAST_LEVELING_POINT
+// #if DISABLED(PROBE_LAST_LEVELING_POINTS)
+//   #define PROBE_ALL_LEVELING_POINTS
+// #endif
+
 // Generally expected filament diameter (1.75, 2.85, 3.0, ...). Used for Volumetric, Filament Width Sensor, etc.
 #define DEFAULT_NOMINAL_FILAMENT_DIA 3.0
 
@@ -183,6 +226,13 @@
  * For additional configuration see Configuration_adv.h
  */
 //#define PRUSA_MMU2
+
+// Snapmaker2.0 dual nozzle module
+// Snapmaker2.0 has two ways to switch nozzles
+#define LIFT_SWITCH_NOZZLE
+//#if DISABLED(LIST_SWITCH_NOZZLE)
+  //#define SWITCHING_NOZZLE
+//#endif
 
 // A dual extruder that uses a single stepper motor
 //#define SWITCHING_EXTRUDER
@@ -866,9 +916,12 @@
  *      O-- FRONT --+
  *    (0,0)
  */
-#define X_PROBE_OFFSET_FROM_EXTRUDER 13  // X offset: -left  +right  [of the nozzle]
-#define Y_PROBE_OFFSET_FROM_EXTRUDER 19.15  // Y offset: -front +behind [the nozzle]
-#define Z_PROBE_OFFSET_FROM_EXTRUDER 1   // Z offset: -below +above  [the nozzle]
+#define X_PROBE_OFFSET_FROM_EXTRUDER -8  // X offset: -left  +right  [of the nozzle]
+#define Y_PROBE_OFFSET_FROM_EXTRUDER -25  // Y offset: -front +behind [the nozzle]
+#define Z_PROBE_OFFSET_FROM_EXTRUDER 0   // Z offset: -below +above  [the nozzle]
+
+#define SWITCH_STROKE_EXTRUDER0  0.5
+#define SWITCH_STROKE_EXTRUDER1  0.9
 
 // Certain types of probes need to stay away from edges
 #define MIN_PROBE_EDGE 5

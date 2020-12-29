@@ -677,6 +677,7 @@ static float run_z_probe() {
 
     // Return the average value of all probes
     const float measured_z = probes_total * (1.0f / (MULTIPLE_PROBING - 1));
+    LOG_I("probes_total: %f, measured_z: %f\n", probes_total, measured_z);
 
   #elif MULTIPLE_PROBING == 2
 

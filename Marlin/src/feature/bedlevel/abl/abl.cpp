@@ -34,6 +34,9 @@
 #include "../../../core/debug_out.h"
 #include "../../../../../snapmaker/src/snapmaker.h"
 
+#include "../../../module/tool_change.h"
+#include "../../../../../snapmaker/src/module/toolhead_3dp.h"
+
 int bilinear_grid_spacing[2], bilinear_start[2];
 float bilinear_grid_factor[2],
       z_values[GRID_MAX_NUM][GRID_MAX_NUM];
@@ -451,13 +454,13 @@ void bilinear_grid_manual()
 }
 
 
-bool visited[GRID_MAX_NUM][GRID_MAX_NUM];
+bool visited[EXTRUDERS][GRID_MAX_NUM][GRID_MAX_NUM];
 uint8_t auto_probing(bool reply_screen, bool fast_leveling) {
   uint8_t ret = E_SUCCESS;
   bilinear_grid_manual();
 
   static int direction [4][2] = {{1, 0}, {0, 1}, {-1, 0}, {0, -1}};
-  memset(visited, 0, sizeof(visited[0][0]) * GRID_MAX_NUM * GRID_MAX_NUM);
+  memset(visited, 0, sizeof(visited[0][0][0]) * GRID_MAX_NUM * GRID_MAX_NUM * EXTRUDERS);
 
   int cur_x = 0;
   int cur_y = 0;
@@ -466,15 +469,21 @@ uint8_t auto_probing(bool reply_screen, bool fast_leveling) {
   int dir_idx = 0;
   do_blocking_move_to_z(15, 10);
 
+  if (printer1->device_id() == MODULE_DEVICE_ID_3DP_DUAL) {
+    printer1->SetProbeSensor(PROBE_SENSOR_MAIN);
+  }
+
   for (int k = 0; k < GRID_MAX_POINTS_X * GRID_MAX_POINTS_Y; ++k) {
     LOG_I("Probing No. %d\n", k);
+    LOG_I("probing x: %d, y: %d\n", cur_x, cur_y);
 
     if (k < (GRID_MAX_POINTS_X * GRID_MAX_POINTS_Y - 1))
-      z = probe_pt(RAW_X_POSITION(_GET_MESH_X(cur_x)), RAW_Y_POSITION(_GET_MESH_Y(cur_y)), PROBE_PT_RAISE, 0, printer1->device_id() != MODULE_DEVICE_ID_3DP_DUAL); // raw position
+      z = probe_pt(RAW_X_POSITION(_GET_MESH_X(cur_x)), RAW_Y_POSITION(_GET_MESH_Y(cur_y)), PROBE_PT_RAISE, 0, true); // raw position
     else
-      z = probe_pt(RAW_X_POSITION(_GET_MESH_X(cur_x)), RAW_Y_POSITION(_GET_MESH_Y(cur_y)), PROBE_PT_NONE, 0, printer1->device_id() != MODULE_DEVICE_ID_3DP_DUAL); // raw position
+      z = probe_pt(RAW_X_POSITION(_GET_MESH_X(cur_x)), RAW_Y_POSITION(_GET_MESH_Y(cur_y)), PROBE_PT_NONE, 0, true); // raw position
     z_values[cur_x][cur_y] = z;
-    visited[cur_x][cur_y] = true;
+    LOG_I("z_values[%d][%d]: %f\n", cur_x, cur_y, z_values[cur_x][cur_y]);
+    visited[active_extruder][cur_x][cur_y] = true;
     if (isnan(z)) {
       SERIAL_ECHOLNPGM("auto probing fail !");
       reset_bed_level();
@@ -490,7 +499,7 @@ uint8_t auto_probing(bool reply_screen, bool fast_leveling) {
     int new_y = cur_y + direction[dir_idx][1];
 
     if (new_x >= GRID_MAX_POINTS_X || new_x < 0 || new_y >= GRID_MAX_POINTS_Y || new_y < 0
-      || visited[new_x][new_y]) {
+      || visited[active_extruder][new_x][new_y]) {
       dir_idx = (dir_idx + 1) % 4; // turn 90 degree
       new_x = cur_x + direction[dir_idx][0];
       new_y = cur_y + direction[dir_idx][1];
@@ -500,7 +509,23 @@ uint8_t auto_probing(bool reply_screen, bool fast_leveling) {
     cur_y = new_y;
   }
 
-  
+  if (printer1->device_id() == MODULE_DEVICE_ID_3DP_DUAL) {
+    hotend_offset[Z_AXIS][TOOLHEAD_3DP_EXTRUDER1] = 0;
+    do_blocking_move_to_z(current_position[Z_AXIS] + 2, speed_in_calibration[Z_AXIS]);
+    tool_change(TOOLHEAD_3DP_EXTRUDER0);
+    printer1->SetProbeSensor(PROBE_SENSOR_EXTRUDER0);
+    float z_extruder0 = probe_pt(RAW_X_POSITION(_GET_MESH_X(GRID_MAX_POINTS_X / 2)), RAW_Y_POSITION(_GET_MESH_Y(GRID_MAX_POINTS_Y / 2)), PROBE_PT_RAISE, 0, false);
+    z_extruder0 += switch_stroke_extruder0;
+    compensate_offset(z_values[GRID_MAX_POINTS_X / 2][GRID_MAX_POINTS_Y / 2] - z_extruder0);
+    tool_change(TOOLHEAD_3DP_EXTRUDER1);
+    printer1->SetProbeSensor(PROBE_SENSOR_EXTRUDER1);
+    float z_extruder1 = probe_pt(RAW_X_POSITION(_GET_MESH_X(GRID_MAX_POINTS_Y / 2)), RAW_Y_POSITION(_GET_MESH_Y(GRID_MAX_POINTS_Y / 2)), PROBE_PT_RAISE, 0, false);
+    z_extruder1 += switch_stroke_extruder1;
+    hotend_offset_z_temp = z_extruder0 - z_extruder1;
+
+    return ret;
+  }
+
   // if fast_leveling is true, over directly. Otherwise move nozzle to current position of probe
   if (!fast_leveling) {
     do_blocking_move_to_z(current_position[Z_AXIS] + 1, speed_in_calibration[Z_AXIS]);
