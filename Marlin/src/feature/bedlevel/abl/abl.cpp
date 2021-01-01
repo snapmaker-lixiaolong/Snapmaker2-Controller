@@ -634,6 +634,13 @@ uint8_t auto_probing(bool reply_screen, bool fast_leveling) {
       }
     #elif ENABLED(PROBE_LAST_LEVELING_POINT)
       //TODO
+      z = probe_pt(RAW_X_POSITION(_GET_MESH_X(cur_x)), RAW_Y_POSITION(_GET_MESH_Y(cur_y)), PROBE_PT_RAISE, 0, printer1->device_id() != MODULE_DEVICE_ID_3DP_DUAL);
+      float temp_z = z - extruders_z_values[0][cur_x][cur_y];
+      for (uint8_t x = 0; x < GRID_MAX_POINTS_X; x++) {
+        for (uint8_t y = 0; y < GRID_MAX_POINTS_Y; y++) {
+          extruders_z_values[1][cur_x][cur_y] = extruders_z_values[0][cur_x][cur_y] + temp_z;
+        }
+      }
     #endif
 
     // do nozzle switch and update the leveling data to z_values
