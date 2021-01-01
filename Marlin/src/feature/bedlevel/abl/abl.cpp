@@ -345,6 +345,8 @@ void refresh_bed_level() {
   bilinear_grid_factor[Y_AXIS] = RECIPROCAL(bilinear_grid_spacing[Y_AXIS]);
   #if ENABLED(ABL_BILINEAR_SUBDIVISION)
     bed_level_virt_interpolate();
+    bed_level_virt_interpolate(0);
+    bed_level_virt_interpolate(1);
   #endif
 }
 
