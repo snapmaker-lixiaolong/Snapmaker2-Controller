@@ -549,7 +549,7 @@ uint8_t auto_probing(bool reply_screen, bool fast_leveling) {
   bilinear_grid_manual();
 
   static int direction [4][2] = {{1, 0}, {0, 1}, {-1, 0}, {0, -1}};
-  memset(visited, 0, sizeof(visited[0][0][0]) * GRID_MAX_NUM * GRID_MAX_NUM);
+  memset(visited, 0, sizeof(visited[0][0][0]) * GRID_MAX_NUM * GRID_MAX_NUM * EXTRUDERS);
 
   int cur_x = 0;
   int cur_y = 0;
