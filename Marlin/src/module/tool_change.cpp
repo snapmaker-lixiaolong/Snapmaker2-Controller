@@ -990,11 +990,11 @@ void tool_change_liftswitch(const uint8_t tmp_extruder, const float lift_left_po
 
         #if ENABLED(LIFT_SWITCH_NOZZLE)
           if (tmp_extruder == 0) {
-            current_position[X_AXIS] = lift_left_position;//15;
+            current_position[X_AXIS] = lift_left_position;
             //NOLESS(current_position[X_AXIS], soft_endstop[X_AXIS].max);
           }
           else if (tmp_extruder == 1) {
-            current_position[X_AXIS] = lift_right_position;//350;
+            current_position[X_AXIS] = lift_right_position;
             //NOMORE(current_position[X_AXIS], soft_endstop[X_AXIS].max);
           }
           planner.buffer_line(current_position, feedrate_mm_s, active_extruder);
@@ -1210,7 +1210,7 @@ void tool_change_motor(const uint8_t tmp_extruder, const float fr_mm_s/*=0.0*/, 
     planner.synchronize();
 
     CanStdFuncCmd_t cmd;
-    uint8_t can_buffer[4];
+    uint8_t can_buffer[3];
 
     can_buffer[0] = tmp_extruder;
     can_buffer[1] = (motor_runtime >> 8) & 0xff;

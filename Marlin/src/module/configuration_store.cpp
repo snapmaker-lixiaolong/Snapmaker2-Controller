@@ -2173,7 +2173,7 @@ void MarlinSettings::reset() {
 
   #if ENABLED(ENABLE_LEVELING_FADE_HEIGHT)
     new_z_fade_height = 0.0;
-  #endifX
+  #endif
 
   #if HAS_LEVELING
     reset_bed_level();
