@@ -69,10 +69,10 @@ void GcodeSuite::T(const uint8_t tool_index) {
     tool_change(tool_index);
 
   #else
-    const bool seen_m = parser.seen("M");
-    const bool seen_n = parser.seen("N");
-    const bool seen_l = parser.seen("L");
-    const bool seen_r = parser.seen("R");
+    bool seen_m = parser.seen("M");
+    bool seen_n = parser.seen("N");
+    bool seen_l = parser.seen("L");
+    bool seen_r = parser.seen("R");
 
     if (seen_m) {
       nozzle0_motor_runtime = (uint16_t)parser.ushortval('M', (uint16_t)0);
@@ -102,7 +102,6 @@ void GcodeSuite::T(const uint8_t tool_index) {
     );
 
 EXIT:
-    printer1->SwitchExtruder(tool_index);
     active_extruder = tool_index;
   #endif
 

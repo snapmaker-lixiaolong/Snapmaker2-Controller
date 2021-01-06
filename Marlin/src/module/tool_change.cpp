@@ -1190,7 +1190,7 @@ void tool_change_motor(const uint8_t tmp_extruder, const float fr_mm_s/*=0.0*/, 
     const float old_feedrate_mm_s = fr_mm_s > 0.0 ? fr_mm_s : feedrate_mm_s;
     feedrate_mm_s = fr_mm_s > 0.0 ? fr_mm_s : XY_PROBE_FEEDRATE_MM_S;
 
-    uint16_t motor_runtime;
+    uint16_t motor_runtime = 0;
 
     if (tmp_extruder == 0) {
       motor_runtime = nozzle0_motor_runtime;
@@ -1209,18 +1209,7 @@ void tool_change_motor(const uint8_t tmp_extruder, const float fr_mm_s/*=0.0*/, 
     planner.buffer_line(current_position, feedrate_mm_s, active_extruder);
     planner.synchronize();
 
-    CanStdFuncCmd_t cmd;
-    uint8_t can_buffer[3];
-
-    can_buffer[0] = tmp_extruder;
-    can_buffer[1] = (motor_runtime >> 8) & 0xff;
-    can_buffer[2] = motor_runtime & 0xff;
-    cmd.id = MODULE_FUNC_SWITCH_EXTRUDER;
-    cmd.data   = can_buffer;
-    cmd.length = 3;
-    if (canhost.SendStdCmdSync(cmd, 10000) != E_SUCCESS) {
-      LOG_E("tool change failed!\n");
-    }
+    printer2->SwitchExtruder(tmp_extruder, motor_runtime);
 
     #if HAS_HOTEND_OFFSET
       #if ENABLED(DUAL_X_CARRIAGE)
