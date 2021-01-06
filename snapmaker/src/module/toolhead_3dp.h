@@ -118,6 +118,5 @@ class ToolHead3DP: public ModuleBase {
 };
 
 extern ToolHead3DP *printer1;
-extern ToolHead3DP *printer2;
 
 #endif  // #ifndef TOOLHEAD_3DP_H_

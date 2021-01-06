@@ -21,6 +21,7 @@
 #ifndef SNAPMAKER_BED_LEVEL_H_
 #define SNAPMAKER_BED_LEVEL_H_
 
+#include "../../../Marlin/src/inc/MarlinConfig.h"
 #include "../hmi/event_handler.h"
 
 enum LevelMode: uint8_t {
@@ -67,6 +68,7 @@ class BedLevelService {
     bool  live_z_offset_updated_ = false;
 
     float MeshPointZ[MESH_POINT_SIZE];
+    float ExtrudersMeshPointZ[EXTRUDERS][MESH_POINT_SIZE];
 };
 
 extern BedLevelService levelservice;

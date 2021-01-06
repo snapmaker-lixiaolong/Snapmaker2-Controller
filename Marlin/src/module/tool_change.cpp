@@ -1209,7 +1209,7 @@ void tool_change_motor(const uint8_t tmp_extruder, const float fr_mm_s/*=0.0*/, 
     planner.buffer_line(current_position, feedrate_mm_s, active_extruder);
     planner.synchronize();
 
-    printer2->SwitchExtruder(tmp_extruder, motor_runtime);
+    printer1->SwitchExtruder(tmp_extruder, motor_runtime);
 
     #if HAS_HOTEND_OFFSET
       #if ENABLED(DUAL_X_CARRIAGE)

@@ -35,7 +35,6 @@ ToolHead3DP printer_single(MODULE_DEVICE_ID_3DP_SINGLE);
 ToolHead3DP printer_dual(MODULE_DEVICE_ID_3DP_DUAL);
 
 ToolHead3DP *printer1 = &printer_single;
-ToolHead3DP *printer2 = &printer_dual;
 
 static void CallbackAckProbeState(CanStdDataFrame_t &cmd) {
   printer1->SetProbeState(cmd.data);
