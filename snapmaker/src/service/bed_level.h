@@ -45,6 +45,7 @@ class BedLevelService {
     ErrCode DoAutoLeveling(SSTP_Event_t &event);
     ErrCode DoManualLeveling(SSTP_Event_t &event);
     ErrCode SetManualLevelingPoint(SSTP_Event_t &event);
+    ErrCode GetCurrentPointZValue(SSTP_Event_t &event);
     ErrCode AdjustZOffsetInLeveling(SSTP_Event_t &event);
     ErrCode SaveAndExitLeveling(SSTP_Event_t &event);
     ErrCode ExitLeveling(SSTP_Event_t &event);

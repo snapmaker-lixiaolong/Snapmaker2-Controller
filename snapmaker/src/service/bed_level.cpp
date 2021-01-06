@@ -252,6 +252,19 @@ out:
   return hmi.Send(event);
 }
 
+ErrCode BedLevelService::GetCurrentPointZValue(SSTP_Event_t &event) {
+  ErrCode err = E_FAILURE;
+
+  MeshPointZ[manual_level_index_] = current_position[Z_AXIS];
+  ExtrudersMeshPointZ[TOOLHEAD_3DP_EXTRUDER0][manual_level_index_] = MeshPointZ[manual_level_index_];
+
+  err = E_SUCCESS;
+
+  event.data = &err;
+  event.length = 1;
+
+  return hmi.Send(event);
+}
 
 ErrCode BedLevelService::AdjustZOffsetInLeveling(SSTP_Event_t &event) {
   ErrCode err = E_FAILURE;

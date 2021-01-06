@@ -70,7 +70,7 @@ void GcodeSuite::G3029() {
   uint8_t level_points = 3;
   uint8_t level_point_index = 1;
   SSTP_Event_t event;
-  bool seen_p, seen_l, seen_r, seen_f;
+  bool seen_p, seen_l, seen_t, seen_r, seen_f;
 
   seen_p = parser.seen("P");
   if(seen_p) {
@@ -98,6 +98,17 @@ void GcodeSuite::G3029() {
     goto EXIT;
   }
 
+  seen_t = parser.seen("T");
+  if (seen_t) {
+    event.op_code = 0x11;
+    event.data = NULL;
+    event.length = 0;
+    event.id = 9; 
+    levelservice.GetCurrentPointZValue(event);
+
+    process_cmd_imd("T1");
+  }
+
   seen_r = parser.seen("R");
   if (seen_r) {
     level_point_index = (uint8_t)parser.byteval('R', (uint8_t)1);
@@ -115,7 +126,7 @@ void GcodeSuite::G3029() {
   if (seen_f) {
     event.op_code = 7;
     event.data = NULL;
-    event.length = 1;
+    event.length = 0;
     event.id = 9;
     levelservice.SaveAndExitLeveling(event);
 
