@@ -194,6 +194,8 @@ ErrCode CanHost::SendStdCmdSync(CanStdFuncCmd_t &cmd, uint32_t timeout_ms, uint8
     goto out;
   }
 
+  LOG_I("send stdmsgsync msg_id is:%d\n", tmp_u16);
+
   tmp_u16 = xMessageBufferReceive(std_wait_q_[i].queue, cmd.data, CAN_STD_CMD_ELEMENT_SIZE - 2, timeout_ms *portTICK_PERIOD_MS);
 
   if (!tmp_u16) {
@@ -350,6 +352,7 @@ void CanHost::ReceiveHandler(void *parameter) {
       }
       else {
         // send message to SendStdMessageSync(), skip message id, which is the 2 bytes in begining
+        LOG_I("receive stdmsgsync msg_id is: %d\n", std_cmd.id.bits.msg_id);
         xMessageBufferSend(tmp_q, std_cmd.data, std_cmd.id.bits.length, 100 * portTICK_PERIOD_MS);
       }
     }
