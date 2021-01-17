@@ -109,7 +109,7 @@ ErrCode BedLevelService::DoXCalibration(SSTP_Event_t &event) {
     prepare_move_to_destination();
 
     uint32_t i;
-    // 每隔1mm打印主尺刻度线，第6根线长30mm，其它线长20mm
+    // 每隔1mm打印主尺刻度线，第6根线长25mm，其它线长20mm
     for (i = 0; i < MAIN_SCALE_LINES; i++) {
       // 走到要打印刻度线的起始位置
       process_cmd_imd("G92 E0");
@@ -125,6 +125,8 @@ ErrCode BedLevelService::DoXCalibration(SSTP_Event_t &event) {
       get_destination_from_logic(destination_position_logic);
       prepare_move_to_destination();
     }
+
+    tool_change(TOOLHEAD_3DP_EXTRUDER1);
 
     // 走到打印的开始位置
     process_cmd_imd("G92 E0");
@@ -157,7 +159,7 @@ ErrCode BedLevelService::DoXCalibration(SSTP_Event_t &event) {
     for (i = 0; i < 10; i++) {
       // 走到要打印刻度线的起始位置
       process_cmd_imd("G92 E0");
-      destination_position_logic[X_AXIS] = 140 + 3 + i * 1;
+      destination_position_logic[X_AXIS] = 140 + 3 + 5 + i * SUB_SCALE_LINE_INTERVAL;
       destination_position_logic[Y_AXIS] = 209.5;
       destination_position_logic[Z_AXIS] = 0.2;
       destination_position_logic[E_AXIS] = 0;
@@ -222,7 +224,7 @@ ErrCode BedLevelService::DoYCalibration(SSTP_Event_t &event) {
     // 走到打印的开始位置
     process_cmd_imd("G92 E0");
     destination_position_logic[X_AXIS] = 140;
-    destination_position_logic[Y_AXIS] = 180;
+    destination_position_logic[Y_AXIS] = 110;
     destination_position_logic[Z_AXIS] = 0.2;
     destination_position_logic[E_AXIS] = 0;
     get_destination_from_logic(destination_position_logic);
@@ -231,7 +233,7 @@ ErrCode BedLevelService::DoYCalibration(SSTP_Event_t &event) {
     // 打印左边界
     process_cmd_imd("G92 E0");
     destination_position_logic[X_AXIS] = 140;
-    destination_position_logic[Y_AXIS] = 240;
+    destination_position_logic[Y_AXIS] = 170;
     destination_position_logic[Z_AXIS] = 0.2;
     destination_position_logic[E_AXIS] = 1.9956;
     get_destination_from_logic(destination_position_logic);
@@ -239,8 +241,8 @@ ErrCode BedLevelService::DoYCalibration(SSTP_Event_t &event) {
 
     // 打印上边界
     process_cmd_imd("G92 E0");
-    destination_position_logic[X_AXIS] = 200;
-    destination_position_logic[Y_AXIS] = 240;
+    destination_position_logic[X_AXIS] = 140;
+    destination_position_logic[Y_AXIS] = 200;
     destination_position_logic[Z_AXIS] = 0.2;
     destination_position_logic[E_AXIS] = 1.9956;
     get_destination_from_logic(destination_position_logic);
@@ -251,15 +253,15 @@ ErrCode BedLevelService::DoYCalibration(SSTP_Event_t &event) {
     for (i = 0; i < MAIN_SCALE_LINES; i++) {
       // 走到要打印刻度线的起始位置
       process_cmd_imd("G92 E0");
-      destination_position_logic[X_AXIS] = 140 + 3 + i * MAIN_SCALE_LINE_INTERVAL;
-      destination_position_logic[Y_AXIS] = 210.5;
+      destination_position_logic[X_AXIS] = 169.5;
+      destination_position_logic[Y_AXIS] = 170 - 3 - i * MAIN_SCALE_LINE_INTERVAL;
       destination_position_logic[Z_AXIS] = 0.2;
       destination_position_logic[E_AXIS] = 0;
       get_destination_from_logic(destination_position_logic);
       prepare_move_to_destination();
 
       // 打印这根线
-      i != 6 ? destination_position_logic[Y_AXIS] = 230.5,  destination_position_logic[E_AXIS] = 0.6652 : destination_position_logic[Y_AXIS] = 235.5, destination_position_logic[E_AXIS] = 0.8315;
+      i != 6 ? destination_position_logic[X_AXIS] = 149.5,  destination_position_logic[E_AXIS] = 0.6652 : destination_position_logic[X_AXIS] = 144.5, destination_position_logic[E_AXIS] = 0.8315;
       get_destination_from_logic(destination_position_logic);
       prepare_move_to_destination();
     }
@@ -267,7 +269,7 @@ ErrCode BedLevelService::DoYCalibration(SSTP_Event_t &event) {
     // 走到打印的开始位置
     process_cmd_imd("G92 E0");
     destination_position_logic[X_AXIS] = 140;
-    destination_position_logic[Y_AXIS] = 180;
+    destination_position_logic[Y_AXIS] = 110;
     destination_position_logic[Z_AXIS] = 0.2;
     destination_position_logic[E_AXIS] = 0;
     get_destination_from_logic(destination_position_logic);
@@ -276,7 +278,7 @@ ErrCode BedLevelService::DoYCalibration(SSTP_Event_t &event) {
     // 打印下边界
     process_cmd_imd("G92 E0");
     destination_position_logic[X_AXIS] = 200;
-    destination_position_logic[Y_AXIS] = 180;
+    destination_position_logic[Y_AXIS] = 110;
     destination_position_logic[Z_AXIS] = 0.2;
     destination_position_logic[E_AXIS] = 1.9956;
     get_destination_from_logic(destination_position_logic);
@@ -285,7 +287,7 @@ ErrCode BedLevelService::DoYCalibration(SSTP_Event_t &event) {
     // 打印右边界
     process_cmd_imd("G92 E0");
     destination_position_logic[X_AXIS] = 200;
-    destination_position_logic[Y_AXIS] = 240;
+    destination_position_logic[Y_AXIS] = 170;
     destination_position_logic[Z_AXIS] = 0.2;
     destination_position_logic[E_AXIS] = 1.9956;
     get_destination_from_logic(destination_position_logic);
@@ -295,15 +297,15 @@ ErrCode BedLevelService::DoYCalibration(SSTP_Event_t &event) {
     for (i = 0; i < 10; i++) {
       // 走到要打印刻度线的起始位置
       process_cmd_imd("G92 E0");
-      destination_position_logic[X_AXIS] = 140 + 3 + i * 1;
-      destination_position_logic[Y_AXIS] = 209.5;
+      destination_position_logic[X_AXIS] = 170.5;
+      destination_position_logic[Y_AXIS] = 170 - 3 - 5 - i * SUB_SCALE_LINE_INTERVAL;
       destination_position_logic[Z_AXIS] = 0.2;
       destination_position_logic[E_AXIS] = 0;
       get_destination_from_logic(destination_position_logic);
       prepare_move_to_destination();
 
       // 打印这根线
-      destination_position_logic[Y_AXIS] = 189.5;
+      destination_position_logic[X_AXIS] = 190.5;
       destination_position_logic[E_AXIS] = 0.6652;
       get_destination_from_logic(destination_position_logic);
       prepare_move_to_destination();
