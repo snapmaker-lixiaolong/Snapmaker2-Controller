@@ -195,9 +195,125 @@ ErrCode BedLevelService::DoYCalibration(SSTP_Event_t &event) {
 
   LOG_I("cross_0_scale_lines:%d\n", cross_0_scale_lines);
 
+  hotend_offset[Y_AXIS][TOOLHEAD_3DP_EXTRUDER1] += cross_0_scale_lines * MAIN_SCALE_LINE_INTERVAL;
 
+  if ((MODULE_TOOLHEAD_3DP == ModuleBase::toolhead()) && (printer1->device_id() == MODULE_DEVICE_ID_3DP_DUAL)) {
+    process_cmd_imd("M104 T0 S200");
+    process_cmd_imd("M104 T1 S200");
+    process_cmd_imd("M140 S70");
 
+    if (!all_axes_homed()) {
+      process_cmd_imd("G28");
+    }
 
+    process_cmd_imd("G90"); //absolute positioning
+
+    tool_change(TOOLHEAD_3DP_EXTRUDER0);
+
+    process_cmd_imd("M109 T0 S200");
+    process_cmd_imd("M109 T1 S200");
+    process_cmd_imd("M190 S70");
+
+    process_cmd_imd("G92 E0");
+    process_cmd_imd("G1 E20 F200");
+    process_cmd_imd("G92 E0");
+
+    float destination_position_logic[XYZE];
+    // 走到打印的开始位置
+    process_cmd_imd("G92 E0");
+    destination_position_logic[X_AXIS] = 140;
+    destination_position_logic[Y_AXIS] = 180;
+    destination_position_logic[Z_AXIS] = 0.2;
+    destination_position_logic[E_AXIS] = 0;
+    get_destination_from_logic(destination_position_logic);
+    prepare_move_to_destination();
+
+    // 打印左边界
+    process_cmd_imd("G92 E0");
+    destination_position_logic[X_AXIS] = 140;
+    destination_position_logic[Y_AXIS] = 240;
+    destination_position_logic[Z_AXIS] = 0.2;
+    destination_position_logic[E_AXIS] = 1.9956;
+    get_destination_from_logic(destination_position_logic);
+    prepare_move_to_destination();
+
+    // 打印上边界
+    process_cmd_imd("G92 E0");
+    destination_position_logic[X_AXIS] = 200;
+    destination_position_logic[Y_AXIS] = 240;
+    destination_position_logic[Z_AXIS] = 0.2;
+    destination_position_logic[E_AXIS] = 1.9956;
+    get_destination_from_logic(destination_position_logic);
+    prepare_move_to_destination();
+
+    uint32_t i;
+    // 每隔1mm打印主尺刻度线，第6根线长30mm，其它线长20mm
+    for (i = 0; i < MAIN_SCALE_LINES; i++) {
+      // 走到要打印刻度线的起始位置
+      process_cmd_imd("G92 E0");
+      destination_position_logic[X_AXIS] = 140 + 3 + i * MAIN_SCALE_LINE_INTERVAL;
+      destination_position_logic[Y_AXIS] = 210.5;
+      destination_position_logic[Z_AXIS] = 0.2;
+      destination_position_logic[E_AXIS] = 0;
+      get_destination_from_logic(destination_position_logic);
+      prepare_move_to_destination();
+
+      // 打印这根线
+      i != 6 ? destination_position_logic[Y_AXIS] = 230.5,  destination_position_logic[E_AXIS] = 0.6652 : destination_position_logic[Y_AXIS] = 235.5, destination_position_logic[E_AXIS] = 0.8315;
+      get_destination_from_logic(destination_position_logic);
+      prepare_move_to_destination();
+    }
+
+    // 走到打印的开始位置
+    process_cmd_imd("G92 E0");
+    destination_position_logic[X_AXIS] = 140;
+    destination_position_logic[Y_AXIS] = 180;
+    destination_position_logic[Z_AXIS] = 0.2;
+    destination_position_logic[E_AXIS] = 0;
+    get_destination_from_logic(destination_position_logic);
+    prepare_move_to_destination();
+
+    // 打印下边界
+    process_cmd_imd("G92 E0");
+    destination_position_logic[X_AXIS] = 200;
+    destination_position_logic[Y_AXIS] = 180;
+    destination_position_logic[Z_AXIS] = 0.2;
+    destination_position_logic[E_AXIS] = 1.9956;
+    get_destination_from_logic(destination_position_logic);
+    prepare_move_to_destination();
+
+    // 打印右边界
+    process_cmd_imd("G92 E0");
+    destination_position_logic[X_AXIS] = 200;
+    destination_position_logic[Y_AXIS] = 240;
+    destination_position_logic[Z_AXIS] = 0.2;
+    destination_position_logic[E_AXIS] = 1.9956;
+    get_destination_from_logic(destination_position_logic);
+    prepare_move_to_destination();
+
+    // 每隔0.9mm打印副尺刻度线，线长20mm
+    for (i = 0; i < 10; i++) {
+      // 走到要打印刻度线的起始位置
+      process_cmd_imd("G92 E0");
+      destination_position_logic[X_AXIS] = 140 + 3 + i * 1;
+      destination_position_logic[Y_AXIS] = 209.5;
+      destination_position_logic[Z_AXIS] = 0.2;
+      destination_position_logic[E_AXIS] = 0;
+      get_destination_from_logic(destination_position_logic);
+      prepare_move_to_destination();
+
+      // 打印这根线
+      destination_position_logic[Y_AXIS] = 189.5;
+      destination_position_logic[E_AXIS] = 0.6652;
+      get_destination_from_logic(destination_position_logic);
+      prepare_move_to_destination();
+    }
+
+    // 打印完毕，温度降下来，z轴抬升，等待用户选择对齐的刻度线还是重做
+    process_cmd_imd("M109 T0 S170");
+    process_cmd_imd("M109 T1 S170");
+    process_cmd_imd("M190 S50");
+  }
 
   return err;
 }

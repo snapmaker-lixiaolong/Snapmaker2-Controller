@@ -65,7 +65,7 @@ void GcodeSuite::G1041() {
   planner.synchronize();   // wait until previous movement commands (G0/G0/G2/G3) have completed before playing with the spindle
 
   SSTP_Event_t event;
-  bool seen_a;
+  bool seen_a, seen_c;
 
   seen_a = parser.seen("A");
   if (seen_a) {
@@ -76,6 +76,14 @@ void GcodeSuite::G1041() {
     event.id = 9;
 
     levelservice.DoYCalibration(event);
+  }
+
+  seen_c = parser.seen("C");
+  if (seen_c) {
+    // save x direction hotend_offset
+    uint8_t sub_alignment_line_number = (uint8_t)parser.intval('C', (uint8_t)0);
+    hotend_offset[Y_AXIS][TOOLHEAD_3DP_EXTRUDER1] += sub_alignment_line_number * SCALE_MEASUREMENT_ACCURACY;
+    settings.save();
   }
 }
 
