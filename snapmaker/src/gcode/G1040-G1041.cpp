@@ -39,24 +39,44 @@ void GcodeSuite::G1040() {
   planner.synchronize();   // wait until previous movement commands (G0/G0/G2/G3) have completed before playing with the spindle
 
   SSTP_Event_t event;
-  bool seen_a, seen_c;
+  bool seen_p, seen_c, seen_a;  // performance, cross, alignment
 
-  seen_a = parser.seen("A");
-  if (seen_a) {
-    int16_t cross_0_scale_lines = (int16_t)parser.intval('A', (int16_t)0);
+  seen_p = parser.seen("P");
+  if (seen_p) {
     event.op_code = 0x11;
-    event.data = (uint8_t *)&cross_0_scale_lines;
-    event.length = sizeof cross_0_scale_lines;
+    event.data = NULL;
+    event.length = 0;
     event.id = 9;
 
     levelservice.DoXCalibration(event);
   }
 
   seen_c = parser.seen("C");
-  if (seen_c) {
+  seen_a = parser.seen("A");
+  if (seen_c && seen_a) {
     // save x direction hotend_offset
-    uint8_t sub_alignment_line_number = (uint8_t)parser.intval('C', (uint8_t)0);
-    hotend_offset[X_AXIS][TOOLHEAD_3DP_EXTRUDER1] += sub_alignment_line_number * SCALE_MEASUREMENT_ACCURACY;
+    int16_t cross_0_scale_lines = (int16_t)parser.intval('C', (int16_t)0);
+    uint8_t sub_alignment_line_number = (uint8_t)parser.intval('A', (uint8_t)0);
+    float main_measurement_unit_offset = 0.0;
+    float main_sub_0_scale_line_distance = 0.0;
+
+    if (cross_0_scale_lines >= 0) {
+      main_measurement_unit_offset = sub_alignment_line_number * SCALE_MEASUREMENT_ACCURACY;
+      main_sub_0_scale_line_distance = (cross_0_scale_lines - 1) * MAIN_SCALE_LINE_INTERVAL + main_measurement_unit_offset;
+    }
+    else {
+      main_measurement_unit_offset = sub_alignment_line_number * SCALE_MEASUREMENT_ACCURACY;
+
+      main_sub_0_scale_line_distance = cross_0_scale_lines * MAIN_SCALE_LINE_INTERVAL + main_measurement_unit_offset;
+    }
+
+    LOG_I("hotend x pre-offset: %.2f\n", hotend_offset[X_AXIS][TOOLHEAD_3DP_EXTRUDER1]);
+    LOG_I("hotend x pre-offset: %.2f\n", main_sub_0_scale_line_distance);
+
+    hotend_offset[X_AXIS][TOOLHEAD_3DP_EXTRUDER1] += main_sub_0_scale_line_distance;
+
+    LOG_I("hotend x post-offset: %.2f\n", hotend_offset[X_AXIS][TOOLHEAD_3DP_EXTRUDER1]);
+
     settings.save();
   }
 }
@@ -65,24 +85,42 @@ void GcodeSuite::G1041() {
   planner.synchronize();   // wait until previous movement commands (G0/G0/G2/G3) have completed before playing with the spindle
 
   SSTP_Event_t event;
-  bool seen_a, seen_c;
+  bool seen_p, seen_c, seen_a;  // performance, cross, alignment
 
-  seen_a = parser.seen("A");
-  if (seen_a) {
-    int16_t cross_0_scale_lines = (int16_t)parser.intval('A', (int16_t)0);
-    event.op_code = 0x13;
-    event.data = (uint8_t *)&cross_0_scale_lines;
-    event.length = sizeof cross_0_scale_lines;
+  seen_p = parser.seen("P");
+  if (seen_p) {
+    event.op_code = 0x12;
+    event.data = NULL;
+    event.length = 0;
     event.id = 9;
 
     levelservice.DoYCalibration(event);
   }
 
   seen_c = parser.seen("C");
-  if (seen_c) {
+  seen_a = parser.seen("A");
+  if (seen_c && seen_a) {
     // save x direction hotend_offset
-    uint8_t sub_alignment_line_number = (uint8_t)parser.intval('C', (uint8_t)0);
-    hotend_offset[Y_AXIS][TOOLHEAD_3DP_EXTRUDER1] += sub_alignment_line_number * SCALE_MEASUREMENT_ACCURACY;
+    int16_t cross_0_scale_lines = (int16_t)parser.intval('C', (int16_t)0);
+    uint8_t sub_alignment_line_number = (uint8_t)parser.intval('A', (uint8_t)0);
+    float main_measurement_unit_offset = 0.0;
+    float main_sub_0_scale_line_distance = 0.0;
+
+    if (cross_0_scale_lines >= 0) {
+      main_measurement_unit_offset = sub_alignment_line_number * SCALE_MEASUREMENT_ACCURACY;
+      main_sub_0_scale_line_distance = (cross_0_scale_lines - 1) * MAIN_SCALE_LINE_INTERVAL + main_measurement_unit_offset;
+    }
+    else {
+      main_measurement_unit_offset = sub_alignment_line_number * SCALE_MEASUREMENT_ACCURACY;
+      main_sub_0_scale_line_distance = cross_0_scale_lines * MAIN_SCALE_LINE_INTERVAL + main_measurement_unit_offset;
+    }
+
+    LOG_I("hotend y pre-offset: %.2f\n", hotend_offset[Y_AXIS][TOOLHEAD_3DP_EXTRUDER1]);
+    LOG_I("hotend y pre-offset: %.2f\n", main_sub_0_scale_line_distance);
+
+    hotend_offset[Y_AXIS][TOOLHEAD_3DP_EXTRUDER1] += main_sub_0_scale_line_distance;
+
+    LOG_I("hotend y post-offset: %.2f\n", hotend_offset[Y_AXIS][TOOLHEAD_3DP_EXTRUDER1]);
     settings.save();
   }
 }

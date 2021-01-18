@@ -44,20 +44,6 @@ extern uint32_t GRID_MAX_POINTS_Y;
 
 ErrCode BedLevelService::DoXCalibration(SSTP_Event_t &event) {
   ErrCode err = E_SUCCESS;
-  int16_t cross_0_scale_lines = -1;
-
-  cross_0_scale_lines = event.data[0] | (event.data[1] << 8);
-
-  if (cross_0_scale_lines < -5) {
-    cross_0_scale_lines = -5;
-  }
-  else if (cross_0_scale_lines > 10) {
-    cross_0_scale_lines = 10;
-  }
-
-  LOG_I("cross_0_scale_lines:%d\n", cross_0_scale_lines);
-
-  hotend_offset[X_AXIS][TOOLHEAD_3DP_EXTRUDER1] += cross_0_scale_lines * MAIN_SCALE_LINE_INTERVAL;
 
   if ((MODULE_TOOLHEAD_3DP == ModuleBase::toolhead()) && (printer1->device_id() == MODULE_DEVICE_ID_3DP_DUAL)) {
     process_cmd_imd("M104 T0 S200");
@@ -76,9 +62,9 @@ ErrCode BedLevelService::DoXCalibration(SSTP_Event_t &event) {
     process_cmd_imd("M109 T1 S200");
     process_cmd_imd("M190 S70");
 
-    process_cmd_imd("G92 E0");
-    process_cmd_imd("G1 E20 F200");
-    process_cmd_imd("G92 E0");
+    //process_cmd_imd("G92 E0");
+    //process_cmd_imd("G1 E20 F200");
+    //process_cmd_imd("G92 E0");
 
     float destination_position_logic[XYZE];
     float start_point[XYZ] = X_CALIBRATION_A350_START_POINT_XYZ;
@@ -111,18 +97,31 @@ ErrCode BedLevelService::DoXCalibration(SSTP_Event_t &event) {
 
     uint32_t i;
     // 每隔1mm打印主尺刻度线，第6根线长25mm，其它线长20mm
+    float main_line_y_start_postion = start_point[Y_AXIS] + X_CALIBRATION_LEFT_RIGHT_LINE_LENGTH/2 + MAIN_SUB_SAFE_DISTANCE;
     for (i = 0; i < MAIN_SCALE_LINES; i++) {
       // 走到要打印刻度线的起始位置
       process_cmd_imd("G92 E0");
       destination_position_logic[X_AXIS] = start_point[X_AXIS] + FIRST_SCALE_LINE_TO_BORDER + i * MAIN_SCALE_LINE_INTERVAL;
-      destination_position_logic[Y_AXIS] = start_point[Y_AXIS] + X_CALIBRATION_UP_DOWN_LINE_LENGTH/2 + MAIN_SUB_SAFE_DISTANCE;
+      destination_position_logic[Y_AXIS] = main_line_y_start_postion;
       destination_position_logic[Z_AXIS] = start_point[Z_AXIS];
       destination_position_logic[E_AXIS] = 0;
       get_destination_from_logic(destination_position_logic);
       prepare_move_to_destination();
 
       // 打印这根线
-      i != SCALE_0_LINE_NUMBER ? destination_position_logic[Y_AXIS] = start_point[Y_AXIS] + X_CALIBRATION_UP_DOWN_LINE_LENGTH/2 + MAIN_SUB_SAFE_DISTANCE + SCALE_LINE_LENGTH,  destination_position_logic[E_AXIS] = SCALE_LINE_LENGTH * E_MOVES_FACTOR : destination_position_logic[Y_AXIS] = start_point[Y_AXIS] + X_CALIBRATION_UP_DOWN_LINE_LENGTH/2 + MAIN_SUB_SAFE_DISTANCE + SCALE_0_LINE_LENGTH, destination_position_logic[E_AXIS] = SCALE_0_LINE_LENGTH * E_MOVES_FACTOR;
+      float print_line_length = 0.0;
+      if (i == SCALE_0_LINE_NUMBER) {
+        print_line_length = SCALE_0_LINE_LENGTH;
+      }
+      else if (i%SCALE_LONGER_LINE_SEQUENCE == 0) {
+        print_line_length = SCALE_LINE_LENGTH_LONGER;
+      }
+      else {
+        print_line_length = SCALE_LINE_LENGHT_NORMAL;
+      }
+
+      destination_position_logic[Y_AXIS] = main_line_y_start_postion + print_line_length;
+      destination_position_logic[E_AXIS] = print_line_length * E_MOVES_FACTOR;
       get_destination_from_logic(destination_position_logic);
       prepare_move_to_destination();
     }
@@ -157,24 +156,33 @@ ErrCode BedLevelService::DoXCalibration(SSTP_Event_t &event) {
     prepare_move_to_destination();
 
     // 每隔0.9mm打印副尺刻度线，线长20mm
+    float sub_line_y_star_position = start_point[Y_AXIS] + X_CALIBRATION_LEFT_RIGHT_LINE_LENGTH/2 - MAIN_SUB_SAFE_DISTANCE;
     for (i = 0; i < SUB_SCALE_LINES; i++) {
       // 走到要打印刻度线的起始位置
       process_cmd_imd("G92 E0");
-      destination_position_logic[X_AXIS] = start_point[X_AXIS] + FIRST_SCALE_LINE_TO_BORDER + (SCALE_0_LINE_NUMBER - 1) * MAIN_SCALE_LINE_INTERVAL + i * SUB_SCALE_LINE_INTERVAL;
-      destination_position_logic[Y_AXIS] = start_point[Y_AXIS] + X_CALIBRATION_UP_DOWN_LINE_LENGTH/2 - MAIN_SUB_SAFE_DISTANCE;
+      destination_position_logic[X_AXIS] = start_point[X_AXIS] + FIRST_SCALE_LINE_TO_BORDER + SCALE_0_LINE_NUMBER * MAIN_SCALE_LINE_INTERVAL + i * SUB_SCALE_LINE_INTERVAL;
+      destination_position_logic[Y_AXIS] = sub_line_y_star_position;
       destination_position_logic[Z_AXIS] = start_point[Z_AXIS];
       destination_position_logic[E_AXIS] = 0;
       get_destination_from_logic(destination_position_logic);
       prepare_move_to_destination();
 
+      float print_line_length = 0.0;
+      if (i%SCALE_LONGER_LINE_SEQUENCE == 0) {
+        print_line_length = SCALE_LINE_LENGTH_LONGER;
+      }
+      else {
+        print_line_length = SCALE_LINE_LENGHT_NORMAL;
+      }
+
       // 打印这根线
-      destination_position_logic[Y_AXIS] = start_point[Y_AXIS] + X_CALIBRATION_UP_DOWN_LINE_LENGTH/2 - MAIN_SUB_SAFE_DISTANCE - SCALE_LINE_LENGTH;
-      destination_position_logic[E_AXIS] = SCALE_LINE_LENGTH * E_MOVES_FACTOR;
+      destination_position_logic[Y_AXIS] = sub_line_y_star_position - print_line_length;
+      destination_position_logic[E_AXIS] = print_line_length * E_MOVES_FACTOR;
       get_destination_from_logic(destination_position_logic);
       prepare_move_to_destination();
     }
 
-    // 打印完毕，温度降下来，z轴抬升，等待用户选择对齐的刻度线还是重做
+    // 打印完毕，温度降下来，z轴抬升，等待用户确认
     process_cmd_imd("M109 T0 S170");
     process_cmd_imd("M109 T1 S170");
     process_cmd_imd("M190 S50");
@@ -185,20 +193,6 @@ ErrCode BedLevelService::DoXCalibration(SSTP_Event_t &event) {
 
 ErrCode BedLevelService::DoYCalibration(SSTP_Event_t &event) {
   ErrCode err = E_SUCCESS;
-  int16_t cross_0_scale_lines = -1;
-
-  cross_0_scale_lines = event.data[0] | (event.data[1] << 8);
-
-  if (cross_0_scale_lines < -5) {
-    cross_0_scale_lines = -5;
-  }
-  else if (cross_0_scale_lines > 10) {
-    cross_0_scale_lines = 10;
-  }
-
-  LOG_I("cross_0_scale_lines:%d\n", cross_0_scale_lines);
-
-  hotend_offset[Y_AXIS][TOOLHEAD_3DP_EXTRUDER1] += cross_0_scale_lines * MAIN_SCALE_LINE_INTERVAL;
 
   if ((MODULE_TOOLHEAD_3DP == ModuleBase::toolhead()) && (printer1->device_id() == MODULE_DEVICE_ID_3DP_DUAL)) {
     process_cmd_imd("M104 T0 S200");
@@ -217,9 +211,9 @@ ErrCode BedLevelService::DoYCalibration(SSTP_Event_t &event) {
     process_cmd_imd("M109 T1 S200");
     process_cmd_imd("M190 S70");
 
-    process_cmd_imd("G92 E0");
-    process_cmd_imd("G1 E20 F200");
-    process_cmd_imd("G92 E0");
+    //process_cmd_imd("G92 E0");
+    //process_cmd_imd("G1 E20 F200");
+    //process_cmd_imd("G92 E0");
 
     float destination_position_logic[XYZE];
     float start_point[XYZ] = Y_CALIBRATION_A350_START_POINT_XYZ;
@@ -252,18 +246,31 @@ ErrCode BedLevelService::DoYCalibration(SSTP_Event_t &event) {
 
     uint32_t i;
     // 每隔1mm打印主尺刻度线，第6根线长30mm，其它线长20mm
+    float main_line_x_start_position = start_point[X_AXIS] + Y_CALIBRATION_UP_DOWN_LINE_LENGTH/2 - MAIN_SUB_SAFE_DISTANCE;
     for (i = 0; i < MAIN_SCALE_LINES; i++) {
       // 走到要打印刻度线的起始位置
       process_cmd_imd("G92 E0");
-      destination_position_logic[X_AXIS] = start_point[X_AXIS] + Y_CALIBRATION_UP_DOWN_LINE_LENGTH/2 - MAIN_SUB_SAFE_DISTANCE;
+      destination_position_logic[X_AXIS] = main_line_x_start_position;
       destination_position_logic[Y_AXIS] = start_point[Y_AXIS] + FIRST_SCALE_LINE_TO_BORDER + i * MAIN_SCALE_LINE_INTERVAL;
       destination_position_logic[Z_AXIS] = start_point[Z_AXIS];
       destination_position_logic[E_AXIS] = 0;
       get_destination_from_logic(destination_position_logic);
       prepare_move_to_destination();
 
+      float print_line_length = 0.0;
+      if (i == SCALE_0_LINE_NUMBER) {
+        print_line_length = SCALE_0_LINE_LENGTH;
+      }
+      else if (i%SCALE_LONGER_LINE_SEQUENCE == 0) {
+        print_line_length = SCALE_LINE_LENGTH_LONGER;
+      }
+      else {
+        print_line_length = SCALE_LINE_LENGHT_NORMAL;
+      }
+
       // 打印这根线
-      i != SCALE_0_LINE_NUMBER ? destination_position_logic[X_AXIS] = start_point[X_AXIS] + Y_CALIBRATION_UP_DOWN_LINE_LENGTH/2 - MAIN_SUB_SAFE_DISTANCE - SCALE_LINE_LENGTH,  destination_position_logic[E_AXIS] = SCALE_LINE_LENGTH * E_MOVES_FACTOR : destination_position_logic[X_AXIS] = start_point[X_AXIS] + Y_CALIBRATION_UP_DOWN_LINE_LENGTH/2 - MAIN_SUB_SAFE_DISTANCE - SCALE_0_LINE_LENGTH, destination_position_logic[E_AXIS] = SCALE_0_LINE_LENGTH * E_MOVES_FACTOR;
+      destination_position_logic[X_AXIS] = main_line_x_start_position - print_line_length;
+      destination_position_logic[E_AXIS] = print_line_length * E_MOVES_FACTOR;
       get_destination_from_logic(destination_position_logic);
       prepare_move_to_destination();
     }
@@ -291,24 +298,33 @@ ErrCode BedLevelService::DoYCalibration(SSTP_Event_t &event) {
     destination_position_logic[X_AXIS] = start_point[X_AXIS] + Y_CALIBRATION_UP_DOWN_LINE_LENGTH;
     destination_position_logic[Y_AXIS] = start_point[Y_AXIS] + Y_CALIBRATION_LEFT_RIGHT_LINE_LENGTH;
     destination_position_logic[Z_AXIS] = start_point[Z_AXIS];
-    destination_position_logic[E_AXIS] = Y_CALIBRATION_UP_DOWN_LINE_LENGTH * E_MOVES_FACTOR;
+    destination_position_logic[E_AXIS] = Y_CALIBRATION_LEFT_RIGHT_LINE_LENGTH * E_MOVES_FACTOR;
     get_destination_from_logic(destination_position_logic);
     prepare_move_to_destination();
 
     // 每隔0.9mm打印副尺刻度线，线长20mm
+    float sub_line_x_start_position = start_point[X_AXIS] + Y_CALIBRATION_UP_DOWN_LINE_LENGTH/2 + MAIN_SUB_SAFE_DISTANCE;
     for (i = 0; i < SUB_SCALE_LINES; i++) {
       // 走到要打印刻度线的起始位置
       process_cmd_imd("G92 E0");
-      destination_position_logic[X_AXIS] = start_point[X_AXIS] + Y_CALIBRATION_UP_DOWN_LINE_LENGTH/2 + MAIN_SUB_SAFE_DISTANCE;
-      destination_position_logic[Y_AXIS] = start_point[Y_AXIS] + FIRST_SCALE_LINE_TO_BORDER + (SCALE_0_LINE_NUMBER - 1) * MAIN_SCALE_LINE_INTERVAL + i * SUB_SCALE_LINE_INTERVAL;
+      destination_position_logic[X_AXIS] = sub_line_x_start_position;
+      destination_position_logic[Y_AXIS] = start_point[Y_AXIS] + FIRST_SCALE_LINE_TO_BORDER + SCALE_0_LINE_NUMBER * MAIN_SCALE_LINE_INTERVAL + i * SUB_SCALE_LINE_INTERVAL;
       destination_position_logic[Z_AXIS] = start_point[Z_AXIS];
       destination_position_logic[E_AXIS] = 0;
       get_destination_from_logic(destination_position_logic);
       prepare_move_to_destination();
 
       // 打印这根线
-      destination_position_logic[X_AXIS] = start_point[X_AXIS] + Y_CALIBRATION_UP_DOWN_LINE_LENGTH/2 + MAIN_SUB_SAFE_DISTANCE + SCALE_LINE_LENGTH;
-      destination_position_logic[E_AXIS] = SCALE_LINE_LENGTH * E_MOVES_FACTOR;
+      float print_line_length = 0.0;
+      if (i%SCALE_LONGER_LINE_SEQUENCE == 0) {
+        print_line_length = SCALE_LINE_LENGTH_LONGER;
+      }
+      else {
+        print_line_length = SCALE_LINE_LENGHT_NORMAL;
+      }
+
+      destination_position_logic[X_AXIS] = sub_line_x_start_position + print_line_length;
+      destination_position_logic[E_AXIS] = print_line_length * E_MOVES_FACTOR;
       get_destination_from_logic(destination_position_logic);
       prepare_move_to_destination();
     }
