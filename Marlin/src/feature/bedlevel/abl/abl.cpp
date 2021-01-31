@@ -464,7 +464,7 @@ uint8_t auto_probing(bool reply_screen, bool fast_leveling) {
   float z;
 
   int dir_idx = 0;
-  do_blocking_move_to_z(15, 10);
+  do_blocking_move_to_z(22, 10);
 
   for (int k = 0; k < GRID_MAX_POINTS_X * GRID_MAX_POINTS_Y; ++k) {
     LOG_I("Probing No. %d\n", k);
@@ -500,7 +500,7 @@ uint8_t auto_probing(bool reply_screen, bool fast_leveling) {
     cur_y = new_y;
   }
 
-  
+
   // if fast_leveling is true, over directly. Otherwise move nozzle to current position of probe
   if (!fast_leveling) {
     do_blocking_move_to_z(current_position[Z_AXIS] + 1, speed_in_calibration[Z_AXIS]);
@@ -523,6 +523,7 @@ void compensate_offset() {
   float offset = z_values[GRID_MAX_POINTS_X / 2][GRID_MAX_POINTS_Y / 2] - current_position[Z_AXIS];
   nozzle_height_probed = offset;
   LOG_I("nozzle height: %.3f\n", nozzle_height_probed);
+  LOG_I("compensate offset: %f\n", offset);
   compensate_offset(offset);
 }
 

@@ -153,6 +153,8 @@ static void main_loop(void *param) {
 
   cur_mills = millis() - 3000;
 
+  enable_power_domain(POWER_DOMAIN_1);
+
   for (;;) {
 
     // receive and execute one command, or push Gcode into Marlin queue

@@ -438,6 +438,8 @@ private:
 
   static void G92();
   static void G1029();
+  static void G2029();
+  static void G4029();
 
   #if ENABLED(CALIBRATION_GCODE)
     static void G425();

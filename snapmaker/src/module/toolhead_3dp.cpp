@@ -244,6 +244,41 @@ ErrCode ToolHead3DP::SetHeater(uint16_t target_temp, uint8_t extrude_index) {
   return canhost.SendStdCmd(cmd, 0);
 }
 
+void ToolHead3DP::SetProbeSensor(uint8_t sensor) {
+  CanStdFuncCmd_t cmd;
+  uint8_t can_buffer[1];
+
+  can_buffer[0] = sensor;
+  cmd.id        = MODULE_FUNC_SET_PROBE_SENSOR;
+  cmd.data      = can_buffer;
+  cmd.length    = 1;
+
+  LOG_I("set sensor: %d\n", sensor);
+
+  ErrCode ret = canhost.SendStdCmdSync(cmd, 6000);
+
+  LOG_I("set sensor finished: %d\n", ret);
+
+  return;
+}
+
+void ToolHead3DP::SetBLTouch(uint8_t command) {
+  CanStdFuncCmd_t cmd;
+  uint8_t can_buffer[1];
+
+  can_buffer[0] = command;
+  cmd.id        = MODULE_FUNC_SET_BLTOUCH;
+  cmd.data      = can_buffer;
+  cmd.length    = 1;
+
+  LOG_I("send BLTouch cmd: %d\n", command);
+
+  ErrCode ret = canhost.SendStdCmdSync(cmd, 2000);
+
+  LOG_I("send BLTouch cmd finished: %d\n", ret);
+
+  return;
+}
 
 void ToolHead3DP::Process() {
   if (++timer_in_process_ < 100) return;

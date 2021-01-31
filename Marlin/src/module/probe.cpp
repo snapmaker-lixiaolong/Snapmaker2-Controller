@@ -708,6 +708,8 @@ static float run_z_probe() {
  *   - Raise to the BETWEEN height
  * - Return the probed Z position
  */
+extern float x_probe_offset_from_nozzle;
+extern float y_probe_offset_from_nozzle;
 float probe_pt(const float &rx, const float &ry, const ProbePtRaise raise_after/*=PROBE_PT_NONE*/, const uint8_t verbose_level/*=0*/, const bool probe_relative/*=true*/) {
   if (DEBUGGING(LEVELING)) {
     DEBUG_ECHOLNPAIR(
@@ -724,8 +726,8 @@ float probe_pt(const float &rx, const float &ry, const ProbePtRaise raise_after/
   SERIAL_ECHOLNPAIR("ProbeX:", rx, " ProbeY:", ry, "Avtive:", probe_relative);
   if (probe_relative) {
     if (!position_is_reachable_by_probe(rx, ry)) { return NAN;}  // The given position is in terms of the probe
-    nx -= (X_PROBE_OFFSET_FROM_EXTRUDER);                     // Get the nozzle position
-    ny -= (Y_PROBE_OFFSET_FROM_EXTRUDER);
+    nx -= x_probe_offset_from_nozzle;//(X_PROBE_OFFSET_FROM_EXTRUDER);                     // Get the nozzle position
+    ny -= y_probe_offset_from_nozzle;//(Y_PROBE_OFFSET_FROM_EXTRUDER);
   }
   else if (!position_is_reachable(nx, ny)) return NAN;        // The given position is in terms of the nozzle
 

@@ -1007,7 +1007,7 @@ ErrCode SystemService::ThrowException(ExceptionHost h, ExceptionType t) {
   }
 
   if (power_disable)
-    disable_power_domain(power_disable);
+     disable_power_domain(power_disable);
 
   if (power_ban)
     enable_power_ban(power_ban);

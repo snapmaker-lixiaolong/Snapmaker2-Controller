@@ -40,10 +40,14 @@ BedLevelService levelservice;
 extern uint32_t GRID_MAX_POINTS_X;
 extern uint32_t GRID_MAX_POINTS_Y;
 
+float x_probe_offset_from_nozzle = X_PROBE_OFFSET_FROM_EXTRUDER;
+float y_probe_offset_from_nozzle = Y_PROBE_OFFSET_FROM_EXTRUDER;
+
 ErrCode BedLevelService::DoAutoLeveling(SSTP_Event_t &event) {
   ErrCode err = E_FAILURE;
 
   uint8_t grid = 3;
+  uint8_t probe_sensor = 0;
   char cmd[16];
 
   float orig_max_z_speed = planner.settings.max_feedrate_mm_s[Z_AXIS];
@@ -58,6 +62,23 @@ ErrCode BedLevelService::DoAutoLeveling(SSTP_Event_t &event) {
     else {
       grid = event.data[0];
     }
+
+    if (event.data[1] > 1) {
+      LOG_E("no probe sensor!\n");
+      goto OUT;
+    }
+    else {
+      probe_sensor = event.data[1];
+    }
+  }
+
+  if (probe_sensor == 1) {
+    x_probe_offset_from_nozzle = X_PROBE_OFFSET_FROM_EXTRUDER + 15.6;
+    y_probe_offset_from_nozzle = Y_PROBE_OFFSET_FROM_EXTRUDER - 4;
+  }
+  else if (probe_sensor == 0) {
+    x_probe_offset_from_nozzle = X_PROBE_OFFSET_FROM_EXTRUDER;
+    y_probe_offset_from_nozzle = Y_PROBE_OFFSET_FROM_EXTRUDER;
   }
 
   LOG_I("e temp: %.2f / %d\n", thermalManager.degHotend(0), thermalManager.degTargetHotend(0));
@@ -84,6 +105,8 @@ ErrCode BedLevelService::DoAutoLeveling(SSTP_Event_t &event) {
 
     endstops.enable_z_probe(true);
 
+    printer1->SetProbeSensor(probe_sensor);
+
     // move quicky firstly to decrease the time
     // move to the first calibration mesh point allow the sensor to detect the bed if the bed
     // is on an unexpected height
@@ -96,6 +119,7 @@ ErrCode BedLevelService::DoAutoLeveling(SSTP_Event_t &event) {
     else
       err = auto_probing(true, true);
 
+    printer1->SetBLTouch(90);
     endstops.enable_z_probe(false);
 
     // Recover the Z max feedrate to 20mm/s
