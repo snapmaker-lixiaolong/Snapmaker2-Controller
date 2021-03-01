@@ -72,6 +72,8 @@ ErrCode BedLevelService::DoAutoLeveling(SSTP_Event_t &event) {
     }
   }
 
+  probe_sensor = 1;
+
   if (probe_sensor == 1) {
     x_probe_offset_from_nozzle = X_PROBE_OFFSET_FROM_EXTRUDER + 15.6;
     y_probe_offset_from_nozzle = Y_PROBE_OFFSET_FROM_EXTRUDER - 4;
