@@ -86,7 +86,6 @@ void GcodeSuite::T(const uint8_t tool_index) {
       (tool_index == active_extruder) || parser.boolval('S')
     );
 
-EXIT:
     active_extruder = tool_index;
   #endif
 

@@ -916,9 +916,13 @@
  *      O-- FRONT --+
  *    (0,0)
  */
-#define X_PROBE_OFFSET_FROM_EXTRUDER -8  // X offset: -left  +right  [of the nozzle]
-#define Y_PROBE_OFFSET_FROM_EXTRUDER -25  // Y offset: -front +behind [the nozzle]
+#define X_PROBE_OFFSET_FROM_EXTRUDER 13  // X offset: -left  +right  [of the nozzle]
+#define Y_PROBE_OFFSET_FROM_EXTRUDER 19  // Y offset: -front +behind [the nozzle]
 #define Z_PROBE_OFFSET_FROM_EXTRUDER 0   // Z offset: -below +above  [the nozzle]
+
+#define DUAL_EXTRUDER_X_PROBE_OFFSET_FROM_EXTRUDER -8
+#define DUAL_ETTRUDER_Y_PROBE_OFFSET_FROM_EXTRUDER -25
+#define DUAL_EXTRUDER_Z_PROBE_OFFSET_FROM_EXTRUDER 0
 
 #define SWITCH_STROKE_EXTRUDER0  0.5
 #define SWITCH_STROKE_EXTRUDER1  0.9
