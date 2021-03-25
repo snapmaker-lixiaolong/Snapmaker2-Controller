@@ -39,13 +39,33 @@ void GcodeSuite::G1040() {
   planner.synchronize();   // wait until previous movement commands (G0/G0/G2/G3) have completed before playing with the spindle
 
   SSTP_Event_t event;
-  bool seen_p, seen_c, seen_a;  // performance, cross, alignment
+  bool seen_l, seen_r, seen_e, seen_c, seen_a;  // performance, cross, alignment
 
-  seen_p = parser.seen("P");
-  if (seen_p) {
+  seen_l = parser.seen("L");
+  seen_r = parser.seen("R");
+  seen_e = parser.seen("E");
+  if (seen_l && seen_r && seen_e) {
+    int16_t extruder0_temp = (int16_t)parser.ushortval('L', (int16_t)205);
+    int16_t extruder1_temp = (int16_t)parser.ushortval('R', (int16_t)205);
+    int16_t bed_temp = 50;
+    float e_factor = (float)parser.floatval('E', (float)E_MOVES_FACTOR);
+    uint8_t buf[8];
+    uint8_t index;
+
+    buf[index++] = extruder0_temp >> 8;
+    buf[index++] = extruder0_temp & 0xff;
+    buf[index++] = extruder1_temp >> 8;
+    buf[index++] = extruder1_temp & 0xff;
+    buf[index++] = bed_temp >> 8;
+    buf[index++] = bed_temp & 0xff;
+    buf[index++] = ((uint8_t *)&e_factor)[0];
+    buf[index++] = ((uint8_t *)&e_factor)[1];
+    buf[index++] = ((uint8_t *)&e_factor)[2];
+    buf[index++] = ((uint8_t *)&e_factor)[3];
+
     event.op_code = 0x11;
-    event.data = NULL;
-    event.length = 0;
+    event.data = buf;
+    event.length = index;
     event.id = 9;
 
     levelservice.DoXCalibration(event);
@@ -54,12 +74,12 @@ void GcodeSuite::G1040() {
   seen_c = parser.seen("C");
   seen_a = parser.seen("A");
   if (seen_c && seen_a) {
-    uint8_t buff[2];
-    buff[0] = (uint8_t)parser.byteval('C', (uint8_t)0);  // cross 0 scale lines
-    buff[1] = (uint8_t)parser.intval('A', (uint8_t)0);   // sub alignment line number
+    uint8_t buf[2];
+    buf[0] = (uint8_t)parser.byteval('C', (uint8_t)0);  // cross 0 scale lines
+    buf[1] = (uint8_t)parser.intval('A', (uint8_t)0);   // sub alignment line number
 
     event.op_code = 0x12;
-    event.data = buff;
+    event.data = buf;
     event.length = 2;
     event.id = 9;
     levelservice.ApplyXCalibration(event);
@@ -70,13 +90,33 @@ void GcodeSuite::G1041() {
   planner.synchronize();   // wait until previous movement commands (G0/G0/G2/G3) have completed before playing with the spindle
 
   SSTP_Event_t event;
-  bool seen_p, seen_c, seen_a;  // performance, cross, alignment
+  bool seen_l, seen_r, seen_e, seen_c, seen_a;  // performance, cross, alignment
 
-  seen_p = parser.seen("P");
-  if (seen_p) {
+  seen_l = parser.seen("L");
+  seen_r = parser.seen("R");
+  seen_e = parser.seen("E");
+  if (seen_l && seen_r && seen_e) {
+    int16_t extruder0_temp = (int16_t)parser.ushortval('L', (int16_t)205);
+    int16_t extruder1_temp = (int16_t)parser.ushortval('R', (int16_t)205);
+    int16_t bed_temp = 50;
+    float e_factor = (float)parser.floatval('E', (float)E_MOVES_FACTOR);
+    uint8_t buf[8];
+    uint8_t index;
+
+    buf[index++] = extruder0_temp >> 8;
+    buf[index++] = extruder0_temp & 0xff;
+    buf[index++] = extruder1_temp >> 8;
+    buf[index++] = extruder1_temp & 0xff;
+    buf[index++] = bed_temp >> 8;
+    buf[index++] = bed_temp & 0xff;
+    buf[index++] = ((uint8_t *)&e_factor)[0];
+    buf[index++] = ((uint8_t *)&e_factor)[1];
+    buf[index++] = ((uint8_t *)&e_factor)[2];
+    buf[index++] = ((uint8_t *)&e_factor)[3];
+
     event.op_code = 0x12;
-    event.data = NULL;
-    event.length = 0;
+    event.data = buf;
+    event.length = index;
     event.id = 9;
 
     levelservice.DoYCalibration(event);
@@ -85,12 +125,12 @@ void GcodeSuite::G1041() {
   seen_c = parser.seen("C");
   seen_a = parser.seen("A");
   if (seen_c && seen_a) {
-    uint8_t buff[2];
-    buff[0] = (uint8_t)parser.byteval('C', (uint8_t)0);  // cross 0 scale lines
-    buff[1] = (uint8_t)parser.intval('A', (uint8_t)0);   // sub alignment line number
+    uint8_t buf[2];
+    buf[0] = (uint8_t)parser.byteval('C', (uint8_t)0);  // cross 0 scale lines
+    buf[1] = (uint8_t)parser.intval('A', (uint8_t)0);   // sub alignment line number
 
     event.op_code = 0x13;
-    event.data = buff;
+    event.data = buf;
     event.length = 2;
     event.id = 9;
     levelservice.ApplyYCalibration(event);

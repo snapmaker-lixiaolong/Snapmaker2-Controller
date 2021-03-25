@@ -46,28 +46,40 @@ ErrCode BedLevelService::DoXCalibration(SSTP_Event_t &event) {
   ErrCode err = E_SUCCESS;
 
   if ((MODULE_TOOLHEAD_3DP == ModuleBase::toolhead()) && (printer1->device_id() == MODULE_DEVICE_ID_3DP_DUAL)) {
-    process_cmd_imd("M104 T0 S205");
-    process_cmd_imd("M104 T1 S205");
-    process_cmd_imd("M140 S70");
+    if (event.length != 8) {
+      return E_PARAM;
+    }
+
+    extruder0_temp = (event.data[0] << 8) | event.data[1];
+    extruder1_temp = (event.data[2] << 8) | event.data[3];
+    bed_temp = (event.data[4] << 8) | event.data[5];
+    ((uint8_t *)&e_factor)[0] = event.data[6];
+    ((uint8_t *)&e_factor)[1] = event.data[7];
+    ((uint8_t *)&e_factor)[2] = event.data[8];
+    ((uint8_t *)&e_factor)[3] = event.data[9];
+
+    thermalManager.setTargetHotend(extruder0_temp, TOOLHEAD_3DP_EXTRUDER0);
+    thermalManager.setTargetHotend(extruder1_temp, TOOLHEAD_3DP_EXTRUDER1);
+    thermalManager.setTargetBed(bed_temp);
 
     if (!all_axes_homed()) {
       process_cmd_imd("G28");
     }
 
-    process_cmd_imd("G90"); //absolute positioning
+    relative_mode = false; //absolute positioning
 
     tool_change(TOOLHEAD_3DP_EXTRUDER0);
 
-    process_cmd_imd("M109 T0 S205");
-    process_cmd_imd("M109 T1 S205");
-    process_cmd_imd("M190 S70");
+    thermalManager.wait_for_hotend(TOOLHEAD_3DP_EXTRUDER0, true);
+    thermalManager.wait_for_hotend(TOOLHEAD_3DP_EXTRUDER1, true);
+    thermalManager.wait_for_bed(true);
 
     feedrate_mm_s = MMM_TO_MMS(1080.0f);
 
     float destination_position_logic[X_TO_E];
     float start_point[XYZ] = X_CALIBRATION_A350_START_POINT_XYZ;
 
-    process_cmd_imd("G92 E0");
+    current_position[E_AXIS] = 0;
     destination_position_logic[X_AXIS] = start_point[X_AXIS];
     destination_position_logic[Y_AXIS] = start_point[Y_AXIS];
     destination_position_logic[Z_AXIS] = start_point[Z_AXIS];
@@ -78,19 +90,19 @@ ErrCode BedLevelService::DoXCalibration(SSTP_Event_t &event) {
     do_blocking_move_to_logical_xy(destination_position_logic[X_AXIS], destination_position_logic[Y_AXIS], 80);
     do_blocking_move_to_logical_z(destination_position_logic[Z_AXIS], 10);
 
-    process_cmd_imd("G92 E0");
+    current_position[E_AXIS] = 0;
     destination_position_logic[X_AXIS] = start_point[X_AXIS];
     destination_position_logic[Y_AXIS] = start_point[Y_AXIS] + X_CALIBRATION_LEFT_RIGHT_LINE_LENGTH;
     destination_position_logic[Z_AXIS] = start_point[Z_AXIS];
-    destination_position_logic[E_AXIS] = X_CALIBRATION_LEFT_RIGHT_LINE_LENGTH * E_MOVES_FACTOR;
+    destination_position_logic[E_AXIS] = X_CALIBRATION_LEFT_RIGHT_LINE_LENGTH * e_factor;
     get_destination_from_logic(destination_position_logic);
     prepare_move_to_destination();
 
-    process_cmd_imd("G92 E0");
+    current_position[E_AXIS] = 0;
     destination_position_logic[X_AXIS] = start_point[X_AXIS] + X_CALIBRATION_UP_DOWN_LINE_LENGTH;
     destination_position_logic[Y_AXIS] = start_point[Y_AXIS] + X_CALIBRATION_LEFT_RIGHT_LINE_LENGTH;
     destination_position_logic[Z_AXIS] = start_point[Z_AXIS];
-    destination_position_logic[E_AXIS] = X_CALIBRATION_UP_DOWN_LINE_LENGTH * E_MOVES_FACTOR;
+    destination_position_logic[E_AXIS] = X_CALIBRATION_UP_DOWN_LINE_LENGTH * e_factor;
     get_destination_from_logic(destination_position_logic);
     prepare_move_to_destination();
 
@@ -121,9 +133,9 @@ ErrCode BedLevelService::DoXCalibration(SSTP_Event_t &event) {
         print_line_length = SCALE_LINE_LENGHT_NORMAL;
       }
 
-      process_cmd_imd("G92 E0");
+      current_position[E_AXIS] = 0;
       destination_position_logic[Y_AXIS] = main_line_y_start_postion + print_line_length;
-      destination_position_logic[E_AXIS] = print_line_length * E_MOVES_FACTOR;
+      destination_position_logic[E_AXIS] = print_line_length * e_factor;
       get_destination_from_logic(destination_position_logic);
       prepare_move_to_destination();
 
@@ -141,19 +153,19 @@ ErrCode BedLevelService::DoXCalibration(SSTP_Event_t &event) {
     destination_position_logic[E_AXIS] = 0;
     do_blocking_move_to_logical_xy(destination_position_logic[X_AXIS], destination_position_logic[Y_AXIS], 80);
 
-    process_cmd_imd("G92 E0");
+    current_position[E_AXIS] = 0;
     destination_position_logic[X_AXIS] = start_point[X_AXIS] + X_CALIBRATION_UP_DOWN_LINE_LENGTH;
     destination_position_logic[Y_AXIS] = start_point[Y_AXIS];
     destination_position_logic[Z_AXIS] = start_point[Z_AXIS];
-    destination_position_logic[E_AXIS] = X_CALIBRATION_UP_DOWN_LINE_LENGTH * E_MOVES_FACTOR ;
+    destination_position_logic[E_AXIS] = X_CALIBRATION_UP_DOWN_LINE_LENGTH * e_factor ;
     get_destination_from_logic(destination_position_logic);
     prepare_move_to_destination();
 
-    process_cmd_imd("G92 E0");
+    current_position[E_AXIS] = 0;
     destination_position_logic[X_AXIS] = start_point[X_AXIS] + X_CALIBRATION_UP_DOWN_LINE_LENGTH;
     destination_position_logic[Y_AXIS] = start_point[Y_AXIS] + X_CALIBRATION_LEFT_RIGHT_LINE_LENGTH;
     destination_position_logic[Z_AXIS] = start_point[Z_AXIS];
-    destination_position_logic[E_AXIS] = X_CALIBRATION_LEFT_RIGHT_LINE_LENGTH * E_MOVES_FACTOR;
+    destination_position_logic[E_AXIS] = X_CALIBRATION_LEFT_RIGHT_LINE_LENGTH * e_factor;
     get_destination_from_logic(destination_position_logic);
     prepare_move_to_destination();
 
@@ -181,9 +193,9 @@ ErrCode BedLevelService::DoXCalibration(SSTP_Event_t &event) {
         print_line_length = SCALE_LINE_LENGHT_NORMAL;
       }
 
-      process_cmd_imd("G92 E0");
+      current_position[E_AXIS] = 0;
       destination_position_logic[Y_AXIS] = sub_line_y_star_position - print_line_length;
-      destination_position_logic[E_AXIS] = print_line_length * E_MOVES_FACTOR;
+      destination_position_logic[E_AXIS] = print_line_length * e_factor;
       get_destination_from_logic(destination_position_logic);
       prepare_move_to_destination();
 
@@ -194,9 +206,6 @@ ErrCode BedLevelService::DoXCalibration(SSTP_Event_t &event) {
     }
 
     do_blocking_move_to_logical_z(100, 40);
-    process_cmd_imd("M104 T0 S170");
-    process_cmd_imd("M104 T1 S170");
-    process_cmd_imd("M140 S40");
   }
 
   return err;
@@ -233,21 +242,33 @@ ErrCode BedLevelService::DoYCalibration(SSTP_Event_t &event) {
   ErrCode err = E_SUCCESS;
 
   if ((MODULE_TOOLHEAD_3DP == ModuleBase::toolhead()) && (printer1->device_id() == MODULE_DEVICE_ID_3DP_DUAL)) {
-    process_cmd_imd("M104 T0 S205");
-    process_cmd_imd("M104 T1 S205");
-    process_cmd_imd("M140 S70");
+    if (event.length != 8) {
+      return E_PARAM;
+    }
+
+    extruder0_temp = (event.data[0] << 8) | event.data[1];
+    extruder1_temp = (event.data[2] << 8) | event.data[3];
+    bed_temp = (event.data[4] << 8) | event.data[5];
+    ((uint8_t *)&e_factor)[0] = event.data[6];
+    ((uint8_t *)&e_factor)[1] = event.data[7];
+    ((uint8_t *)&e_factor)[2] = event.data[8];
+    ((uint8_t *)&e_factor)[3] = event.data[9];
+
+    thermalManager.setTargetHotend(extruder0_temp, TOOLHEAD_3DP_EXTRUDER0);
+    thermalManager.setTargetHotend(extruder1_temp, TOOLHEAD_3DP_EXTRUDER1);
+    thermalManager.setTargetBed(bed_temp);
 
     if (!all_axes_homed()) {
       process_cmd_imd("G28");
     }
 
-    process_cmd_imd("G90"); //absolute positioning
+    relative_mode = false; //absolute positioning
 
     tool_change(TOOLHEAD_3DP_EXTRUDER0);
 
-    process_cmd_imd("M109 T0 S205");
-    process_cmd_imd("M109 T1 S205");
-    process_cmd_imd("M190 S70");
+    thermalManager.wait_for_hotend(TOOLHEAD_3DP_EXTRUDER0, true);
+    thermalManager.wait_for_hotend(TOOLHEAD_3DP_EXTRUDER1, true);
+    thermalManager.wait_for_bed(true);
 
     feedrate_mm_s = MMM_TO_MMS(1080.0f);
 
@@ -264,19 +285,19 @@ ErrCode BedLevelService::DoYCalibration(SSTP_Event_t &event) {
     do_blocking_move_to_logical_xy(destination_position_logic[X_AXIS], destination_position_logic[Y_AXIS], 80);
     do_blocking_move_to_logical_z(destination_position_logic[Z_AXIS], 10);
 
-    process_cmd_imd("G92 E0");
+    current_position[E_AXIS] = 0;
     destination_position_logic[X_AXIS] = start_point[X_AXIS];
     destination_position_logic[Y_AXIS] = start_point[Y_AXIS] + Y_CALIBRATION_LEFT_RIGHT_LINE_LENGTH;
     destination_position_logic[Z_AXIS] = start_point[Z_AXIS];
-    destination_position_logic[E_AXIS] = Y_CALIBRATION_LEFT_RIGHT_LINE_LENGTH * E_MOVES_FACTOR;
+    destination_position_logic[E_AXIS] = Y_CALIBRATION_LEFT_RIGHT_LINE_LENGTH * e_factor;
     get_destination_from_logic(destination_position_logic);
     prepare_move_to_destination();
 
-    process_cmd_imd("G92 E0");
+    current_position[E_AXIS] = 0;
     destination_position_logic[X_AXIS] = start_point[X_AXIS] + Y_CALIBRATION_UP_DOWN_LINE_LENGTH;
     destination_position_logic[Y_AXIS] = start_point[Y_AXIS] + Y_CALIBRATION_LEFT_RIGHT_LINE_LENGTH;
     destination_position_logic[Z_AXIS] = start_point[Z_AXIS];
-    destination_position_logic[E_AXIS] = Y_CALIBRATION_UP_DOWN_LINE_LENGTH * E_MOVES_FACTOR;
+    destination_position_logic[E_AXIS] = Y_CALIBRATION_UP_DOWN_LINE_LENGTH * e_factor;
     get_destination_from_logic(destination_position_logic);
     prepare_move_to_destination();
 
@@ -307,9 +328,9 @@ ErrCode BedLevelService::DoYCalibration(SSTP_Event_t &event) {
         print_line_length = SCALE_LINE_LENGHT_NORMAL;
       }
 
-      process_cmd_imd("G92 E0");
+      current_position[E_AXIS] = 0;
       destination_position_logic[X_AXIS] = main_line_x_start_position - print_line_length;
-      destination_position_logic[E_AXIS] = print_line_length * E_MOVES_FACTOR;
+      destination_position_logic[E_AXIS] = print_line_length * e_factor;
       get_destination_from_logic(destination_position_logic);
       prepare_move_to_destination();
 
@@ -327,19 +348,19 @@ ErrCode BedLevelService::DoYCalibration(SSTP_Event_t &event) {
     destination_position_logic[E_AXIS] = 0;
     do_blocking_move_to_logical_xy(destination_position_logic[X_AXIS], destination_position_logic[Y_AXIS], 80);
 
-    process_cmd_imd("G92 E0");
+    current_position[E_AXIS] = 0;
     destination_position_logic[X_AXIS] = start_point[X_AXIS] + Y_CALIBRATION_UP_DOWN_LINE_LENGTH;
     destination_position_logic[Y_AXIS] = start_point[Y_AXIS];
     destination_position_logic[Z_AXIS] = start_point[Z_AXIS];
-    destination_position_logic[E_AXIS] = Y_CALIBRATION_UP_DOWN_LINE_LENGTH * E_MOVES_FACTOR;
+    destination_position_logic[E_AXIS] = Y_CALIBRATION_UP_DOWN_LINE_LENGTH * e_factor;
     get_destination_from_logic(destination_position_logic);
     prepare_move_to_destination();
 
-    process_cmd_imd("G92 E0");
+    current_position[E_AXIS] = 0;
     destination_position_logic[X_AXIS] = start_point[X_AXIS] + Y_CALIBRATION_UP_DOWN_LINE_LENGTH;
     destination_position_logic[Y_AXIS] = start_point[Y_AXIS] + Y_CALIBRATION_LEFT_RIGHT_LINE_LENGTH;
     destination_position_logic[Z_AXIS] = start_point[Z_AXIS];
-    destination_position_logic[E_AXIS] = Y_CALIBRATION_LEFT_RIGHT_LINE_LENGTH * E_MOVES_FACTOR;
+    destination_position_logic[E_AXIS] = Y_CALIBRATION_LEFT_RIGHT_LINE_LENGTH * e_factor;
     get_destination_from_logic(destination_position_logic);
     prepare_move_to_destination();
 
@@ -366,9 +387,9 @@ ErrCode BedLevelService::DoYCalibration(SSTP_Event_t &event) {
         print_line_length = SCALE_LINE_LENGHT_NORMAL;
       }
 
-      process_cmd_imd("G92 E0");
+      current_position[E_AXIS] = 0;
       destination_position_logic[X_AXIS] = sub_line_x_start_position + print_line_length;
-      destination_position_logic[E_AXIS] = print_line_length * E_MOVES_FACTOR;
+      destination_position_logic[E_AXIS] = print_line_length * e_factor;
       get_destination_from_logic(destination_position_logic);
       prepare_move_to_destination();
 
@@ -379,9 +400,6 @@ ErrCode BedLevelService::DoYCalibration(SSTP_Event_t &event) {
     }
 
     do_blocking_move_to_logical_z(100, 40);
-    process_cmd_imd("M104 T0 S170");
-    process_cmd_imd("M104 T1 S170");
-    process_cmd_imd("M140 S50");
   }
 
   return err;

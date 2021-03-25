@@ -74,6 +74,11 @@ class BedLevelService {
 
     float MeshPointZ[MESH_POINT_SIZE];
     float ExtrudersMeshPointZ[EXTRUDERS][MESH_POINT_SIZE];
+
+    int16_t extruder0_temp;
+    int16_t extruder1_temp;
+    int16_t bed_temp;
+    float e_factor;
 };
 
 extern BedLevelService levelservice;
