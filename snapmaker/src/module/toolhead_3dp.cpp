@@ -150,6 +150,15 @@ ErrCode ToolHead3DP::Init(MAC_t &mac, uint8_t mac_index) {
 
   SetToolhead(MODULE_TOOLHEAD_3DP);
 
+  if (this->device_id_ == MODULE_DEVICE_ID_3DP_SINGLE) {
+    xprobe_offset_from_extruder = X_PROBE_OFFSET_FROM_EXTRUDER;
+    yprobe_offset_from_extruder = Y_PROBE_OFFSET_FROM_EXTRUDER;
+  }
+  else if (this->device_id_ == MODULE_DEVICE_ID_3DP_DUAL) {
+    xprobe_offset_from_extruder = DUAL_EXTRUDER_X_PROBE_OFFSET_FROM_EXTRUDER;
+    yprobe_offset_from_extruder = DUAL_ETTRUDER_Y_PROBE_OFFSET_FROM_EXTRUDER;
+  }
+
   // read the state of sensors
   vTaskDelay(pdMS_TO_TICKS(5));
 
@@ -185,22 +194,22 @@ out:
 
 void ToolHead3DP::SetProbeState(uint8_t state[]) {
   if (device_id_ == MODULE_DEVICE_ID_3DP_DUAL) {
-    if (!state[0])
+    if (state[0]) {
       probe_state_ |= 0x01;
-    else
+    }
+    else {
       probe_state_ &= ~0x01;
+    }
 
     if (!state[1])
       probe_state_ |= 0x02;
     else
       probe_state_ &= ~0x02;
 
-    if (state[2]) {
+    if (!state[2])
       probe_state_ |= 0x04;
-    }
-    else {
+    else
       probe_state_ &= ~0x04;
-    }
   }
   else {
     if (state[0])
@@ -266,14 +275,14 @@ ErrCode ToolHead3DP::SetFan(uint8_t fan_index, uint8_t speed, uint8_t delay_time
 
 void ToolHead3DP::SetProbeSensor(uint8_t sensor) {
   switch (sensor) {
+    case PROBE_SENSOR_MAIN:
+      active_probe_sensor = PROBE_SENSOR_MAIN;
+      break;
     case PROBE_SENSOR_EXTRUDER0:
       active_probe_sensor = PROBE_SENSOR_EXTRUDER0;
       break;
     case PROBE_SENSOR_EXTRUDER1:
       active_probe_sensor = PROBE_SENSOR_EXTRUDER1;
-      break;
-    case PROBE_SENSOR_MAIN:
-      active_probe_sensor = PROBE_SENSOR_MAIN;
       break;
   }
 }

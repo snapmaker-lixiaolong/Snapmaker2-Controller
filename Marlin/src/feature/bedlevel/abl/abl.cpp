@@ -469,9 +469,7 @@ uint8_t auto_probing(bool reply_screen, bool fast_leveling) {
   int dir_idx = 0;
   do_blocking_move_to_z(15, 10);
 
-  if (printer1->device_id() == MODULE_DEVICE_ID_3DP_DUAL) {
-    printer1->SetProbeSensor(PROBE_SENSOR_MAIN);
-  }
+  printer1->SetProbeSensor(PROBE_SENSOR_MAIN);
 
   for (int k = 0; k < GRID_MAX_POINTS_X * GRID_MAX_POINTS_Y; ++k) {
     LOG_I("Probing No. %d\n", k);

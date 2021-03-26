@@ -36,22 +36,14 @@
 #define TOOLHEAD_3DP_EXTRUDER1    (1)
 
 typedef enum {
-  PROBE_SENSOR_EXTRUDER0 = 0,
-  PROBE_SENSOR_EXTRUDER1 = 1,
-  PROBE_SENSOR_MAIN      = 2,
+  PROBE_SENSOR_MAIN      = 0,
+  PROBE_SENSOR_EXTRUDER0 = 1,
+  PROBE_SENSOR_EXTRUDER1 = 2,
 }PROBE_SENSOR_T;
 
 class ToolHead3DP: public ModuleBase {
   public:
     ToolHead3DP(ModuleDeviceID id): ModuleBase(id) {
-      if (id == MODULE_DEVICE_ID_3DP_SINGLE) {
-        xprobe_offset_from_extruder = X_PROBE_OFFSET_FROM_EXTRUDER;
-        yprobe_offset_from_extruder = Y_PROBE_OFFSET_FROM_EXTRUDER;
-      }
-      else if (id == MODULE_DEVICE_ID_3DP_DUAL) {
-        xprobe_offset_from_extruder = DUAL_EXTRUDER_X_PROBE_OFFSET_FROM_EXTRUDER;
-        yprobe_offset_from_extruder = DUAL_ETTRUDER_Y_PROBE_OFFSET_FROM_EXTRUDER;
-      }
       for (int i = 0; i < TOOLHEAD_3DP_EXTRUDER_MAX; i++) {
         cur_temp_[i]  = 0;
         target_temp_[i] = 0;
