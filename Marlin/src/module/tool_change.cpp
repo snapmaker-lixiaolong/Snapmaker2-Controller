@@ -90,8 +90,8 @@
   float lift_switch_right_position;
 
   void reset_tool_change_params (){
-    lift_switch_left_position = DEFAULT_LIFT_SWITCH_LEFT_POSITION;
-    lift_switch_right_position = DEFAULT_LIFT_SWITCH_RIGHT_POSITION;
+    lift_switch_left_position  = INVALID_LIFT_SWITCH_POSITION;
+    lift_switch_right_position = INVALID_LIFT_SWITCH_POSITION;
   }
 #endif
 
@@ -738,6 +738,7 @@ void tool_change(const uint8_t tmp_extruder, const float fr_mm_s/*=0.0*/, bool n
       #endif
 
       if (DEBUGGING(LEVELING)) DEBUG_ECHOLNPAIR("Offset Tool XY by { ", xdiff, ", ", ydiff, ", ", zdiff, " }");
+
 
       // The newly-selected extruder XY is actually at...
       current_position[X_AXIS] += xdiff;

@@ -37,6 +37,8 @@
 #include "../../../module/tool_change.h"
 #include "../../../../../snapmaker/src/module/toolhead_3dp.h"
 
+#include "../../../module/endstops.h"
+
 int bilinear_grid_spacing[2], bilinear_start[2];
 float bilinear_grid_factor[2],
       z_values[GRID_MAX_NUM][GRID_MAX_NUM];
@@ -469,8 +471,6 @@ uint8_t auto_probing(bool reply_screen, bool fast_leveling) {
   int dir_idx = 0;
   do_blocking_move_to_z(15, 10);
 
-  printer1->SetProbeSensor(PROBE_SENSOR_MAIN);
-
   for (int k = 0; k < GRID_MAX_POINTS_X * GRID_MAX_POINTS_Y; ++k) {
     LOG_I("Probing No. %d\n", k);
     LOG_I("probing x: %d, y: %d\n", cur_x, cur_y);
@@ -480,7 +480,6 @@ uint8_t auto_probing(bool reply_screen, bool fast_leveling) {
     else
       z = probe_pt(RAW_X_POSITION(_GET_MESH_X(cur_x)), RAW_Y_POSITION(_GET_MESH_Y(cur_y)), PROBE_PT_NONE, 0, true); // raw position
     z_values[cur_x][cur_y] = z;
-    LOG_I("z_values[%d][%d]: %f\n", cur_x, cur_y, z_values[cur_x][cur_y]);
     visited[active_extruder][cur_x][cur_y] = true;
     if (isnan(z)) {
       SERIAL_ECHOLNPGM("auto probing fail !");

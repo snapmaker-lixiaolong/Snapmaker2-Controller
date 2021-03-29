@@ -36,6 +36,7 @@
 #include "src/feature/bedlevel/bedlevel.h"
 
 #include "src/module/tool_change.h"
+#include "../module/linear.h"
 
 BedLevelService levelservice;
 
@@ -463,6 +464,11 @@ ErrCode BedLevelService::DoAutoLeveling(SSTP_Event_t &event) {
 
     if (printer1->device_id() == MODULE_DEVICE_ID_3DP_DUAL) {
       // switch to the left nozzle
+      if (linear_p->machine_size() == MACHINE_SIZE_A150) {
+          current_position[X_AXIS] = 100;
+          planner.buffer_line(current_position, feedrate_mm_s, active_extruder);
+          planner.synchronize();
+      }
       tool_change(TOOLHEAD_3DP_EXTRUDER0);
     }
 
@@ -478,6 +484,8 @@ ErrCode BedLevelService::DoAutoLeveling(SSTP_Event_t &event) {
     planner.settings.max_feedrate_mm_s[Z_AXIS] = max_speed_in_calibration[Z_AXIS];
 
     endstops.enable_z_probe(true);
+
+    LOG_I("enable z probe\n");
 
     // move quicky firstly to decrease the time
     // move to the first calibration mesh point allow the sensor to detect the bed if the bed

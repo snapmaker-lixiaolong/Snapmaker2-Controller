@@ -748,6 +748,9 @@ float probe_pt(const float &rx, const float &ry, const ProbePtRaise raise_after/
   LOG_I("Move to X: %.2f, Y: %.2f, Z: %.2f\n", nx, ny, nz);
   do_blocking_move_to(nx, ny, nz);
 
+  LOG_I("probe_pt\n");
+  endstops.M119();
+
   float measured_z = NAN;
   if (!DEPLOY_PROBE()) {
     measured_z = run_z_probe() + zprobe_zoffset;

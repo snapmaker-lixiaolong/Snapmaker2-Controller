@@ -359,6 +359,7 @@ void Endstops::not_homing() {
 // Enable / disable endstop z-probe checking
 #if HAS_BED_PROBE
   void Endstops::enable_z_probe(const bool onoff) {
+    printer1->SetProbeSensor(PROBE_SENSOR_MAIN);
     z_probe_enabled = onoff;
     resync();
   }

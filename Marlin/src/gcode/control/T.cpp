@@ -22,6 +22,7 @@
 
 #include "../gcode.h"
 #include "../../module/tool_change.h"
+#include "../../module/configuration_store.h"
 
 #if ENABLED(DEBUG_LEVELING_FEATURE) || EXTRUDERS > 1
   #include "../../module/motion.h"
@@ -69,16 +70,6 @@ void GcodeSuite::T(const uint8_t tool_index) {
     tool_change(tool_index);
 
   #else
-    bool seen_l = parser.seen("L");
-    bool seen_r = parser.seen("R");
-
-    if (seen_l) {
-      lift_switch_left_position = (float)parser.floatval('L', (float)15);
-    }
-
-    if (seen_r) {
-      lift_switch_right_position = (float)parser.floatval('R', (float)355);
-    }
 
     tool_change(
       tool_index,
