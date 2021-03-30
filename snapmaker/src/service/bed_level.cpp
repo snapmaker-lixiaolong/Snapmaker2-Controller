@@ -451,6 +451,10 @@ ErrCode BedLevelService::DoAutoLeveling(SSTP_Event_t &event) {
     }
   }
 
+  if (((printer1->device_id() == MODULE_DEVICE_ID_3DP_DUAL) && (grid % 2 != 1)) || grid < 2) {
+    return E_FAILURE;
+  }
+
   LOG_I("e temp: %.2f / %d\n", thermalManager.degHotend(0), thermalManager.degTargetHotend(0));
   LOG_I("b temp: %.2f / %d\n", thermalManager.degBed(), thermalManager.degTargetBed());
 
