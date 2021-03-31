@@ -259,7 +259,14 @@ void GcodeSuite::G28(const bool always_home_all) {
     #if DISABLED(DELTA) || ENABLED(DELTA_HOME_TO_SAFE_ZONE)
       const uint8_t old_tool_index = active_extruder;
     #endif
-    tool_change(0, 0, true);
+
+    if (linear_p->machine_size() == MACHINE_SIZE_A150 && printer1->device_id() == MODULE_DEVICE_ID_3DP_DUAL) {
+      tool_change(1, 0, true);
+    }
+    else {
+      tool_change(0, 0, true);
+    }
+
   #endif
 
   #if HAS_DUPLICATION_MODE
