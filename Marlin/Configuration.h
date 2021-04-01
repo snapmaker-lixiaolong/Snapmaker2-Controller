@@ -147,7 +147,55 @@
 
 // This defines the number of extruders
 // :[1, 2, 3, 4, 5, 6]
-#define EXTRUDERS 1
+#define EXTRUDERS 2
+
+#if EXTRUDERS > 1
+  #define INVALID_LIFT_SWITCH_POSITION          0
+  #define S_DEFAULT_LIFT_SWITCH_LEFT_POSITION   20
+  #define S_DEFAULT_LIFT_SWITCH_RIGHT_POSITION  169
+  #define M_DEFAULT_LIFT_SWITCH_LEFT_POSITION   15
+  #define M_DEFAULT_LIFT_SWITCH_RIGHT_POSITION  250
+  #define L_DEFAULT_LIFT_SWITCH_LEFT_POSITION   15
+  #define L_DEFAULT_LIFT_SWITCH_RIGHT_POSITION  350
+  #define DEFAULT_NOZZLE0_MOTOR_RUNTIME       1000
+  #define DEFAULT_NOZZLE1_MOTOR_RUNTIME       2000
+
+  #define MAIN_SCALE_LINE_INTERVAL    2   // mm
+  #define SUB_SCALE_LINE_INTERVAL     1.9 // mm
+  #define SCALE_MEASUREMENT_ACCURACY  (MAIN_SCALE_LINE_INTERVAL - SUB_SCALE_LINE_INTERVAL)
+  #define MAIN_SCALE_LINES            41
+  #define SUB_SCALE_LINES             21
+  #define SCALE_0_LINE_NUMBER         5
+  #define SCALE_LONGER_LINE_SEQUENCE  5
+  #define MAIN_SUB_SAFE_DISTANCE      0.5 // mm
+  #define FIRST_SCALE_LINE_TO_BORDER  4   // mm
+
+  #define SCALE_0_LINE_LENGTH         20  // mm
+  #define SCALE_LINE_LENGTH_LONGER    15  // mm
+  #define SCALE_LINE_LENGHT_NORMAL    10  // mm
+
+  #define E_RETACTION_LENGTH          0.2 // mm
+
+  #define X_CALIBRATION_A350_START_POINT_XYZ {110.0, 180.0, 0.7}  // mm
+  #define X_CALIBRATION_A250_START_POINT_XYZ {140.0, 180.0, 0.2}
+  #define X_CALIBRATION_A150_START_POINT_XYZ {140.0, 180.0, 0.2}
+
+  #define Y_CALIBRATION_A350_START_POINT_XYZ {140.0, 80.0, 0.7}
+  #define Y_CALIBRATION_A250_START_POINT_XYZ {140.0, 110.0, 0.2}
+  #define Y_CALIBRATION_A150_START_POINT_XYZ {140.0, 110.0, 0.2}
+
+  #define X_CALIBRATION_LEFT_RIGHT_LINE_LENGTH  60  // mm
+  #define X_CALIBRATION_UP_DOWN_LINE_LENGTH     90  // mm
+  #define Y_CALIBRATION_LEFT_RIGHT_LINE_LENGTH  90  // mm
+  #define Y_CALIBRATION_UP_DOWN_LINE_LENGTH     60  // mm
+
+  #define E_MOVES_FACTOR  0.05 // 0.03326
+#endif
+
+#define PROBE_LAST_LEVELING_POINT
+// #if DISABLED(PROBE_LAST_LEVELING_POINTS)
+//   #define PROBE_ALL_LEVELING_POINTS
+// #endif
 
 // Generally expected filament diameter (1.75, 2.85, 3.0, ...). Used for Volumetric, Filament Width Sensor, etc.
 #define DEFAULT_NOMINAL_FILAMENT_DIA 3.0
@@ -183,6 +231,13 @@
  * For additional configuration see Configuration_adv.h
  */
 //#define PRUSA_MMU2
+
+// Snapmaker2.0 dual nozzle module
+// Snapmaker2.0 has two ways to switch nozzles
+#define LIFT_SWITCH_NOZZLE
+//#if DISABLED(LIST_SWITCH_NOZZLE)
+  //#define SWITCHING_NOZZLE
+//#endif
 
 // A dual extruder that uses a single stepper motor
 //#define SWITCHING_EXTRUDER
@@ -370,7 +425,7 @@
  * :{ '0': "Not used", '1':"100k / 4.7k - EPCOS", '2':"200k / 4.7k - ATC Semitec 204GT-2", '3':"Mendel-parts / 4.7k", '4':"10k !! do not use for a hotend. Bad resolution at high temp. !!", '5':"100K / 4.7k - ATC Semitec 104GT-2 (Used in ParCan & J-Head)", '501':"100K Zonestar (Tronxy X3A)", '6':"100k / 4.7k EPCOS - Not as accurate as Table 1", '7':"100k / 4.7k Honeywell 135-104LAG-J01", '8':"100k / 4.7k 0603 SMD Vishay NTCS0603E3104FXT", '9':"100k / 4.7k GE Sensing AL03006-58.2K-97-G1", '10':"100k / 4.7k RS 198-961", '11':"100k / 4.7k beta 3950 1%", '12':"100k / 4.7k 0603 SMD Vishay NTCS0603E3104FXT (calibrated for Makibox hot bed)", '13':"100k Hisens 3950  1% up to 300°C for hotend 'Simple ONE ' & hotend 'All In ONE'", '20':"PT100 (Ultimainboard V2.x)", '51':"100k / 1k - EPCOS", '52':"200k / 1k - ATC Semitec 204GT-2", '55':"100k / 1k - ATC Semitec 104GT-2 (Used in ParCan & J-Head)", '60':"100k Maker's Tool Works Kapton Bed Thermistor beta=3950", '61':"100k Formbot / Vivedino 3950 350C thermistor 4.7k pullup", '66':"Dyze Design 4.7M High Temperature thermistor", '67':"Slice Engineering 450C High Temperature thermistor", '70':"the 100K thermistor found in the bq Hephestos 2", '71':"100k / 4.7k Honeywell 135-104LAF-J01", '147':"Pt100 / 4.7k", '1047':"Pt1000 / 4.7k", '110':"Pt100 / 1k (non-standard)", '1010':"Pt1000 / 1k (non standard)", '-4':"Thermocouple + AD8495", '-3':"Thermocouple + MAX31855 (only for sensor 0)", '-2':"Thermocouple + MAX6675 (only for sensor 0)", '-1':"Thermocouple + AD595",'998':"Dummy 1", '999':"Dummy 2" }
  */
 #define TEMP_SENSOR_0 1
-#define TEMP_SENSOR_1 0
+#define TEMP_SENSOR_1 1
 #define TEMP_SENSOR_2 0
 #define TEMP_SENSOR_3 0
 #define TEMP_SENSOR_4 0
@@ -867,8 +922,15 @@
  *    (0,0)
  */
 #define X_PROBE_OFFSET_FROM_EXTRUDER 13  // X offset: -left  +right  [of the nozzle]
-#define Y_PROBE_OFFSET_FROM_EXTRUDER 19.15  // Y offset: -front +behind [the nozzle]
-#define Z_PROBE_OFFSET_FROM_EXTRUDER 1   // Z offset: -below +above  [the nozzle]
+#define Y_PROBE_OFFSET_FROM_EXTRUDER 19  // Y offset: -front +behind [the nozzle]
+#define Z_PROBE_OFFSET_FROM_EXTRUDER 0   // Z offset: -below +above  [the nozzle]
+
+#define DUAL_EXTRUDER_X_PROBE_OFFSET_FROM_EXTRUDER -8
+#define DUAL_ETTRUDER_Y_PROBE_OFFSET_FROM_EXTRUDER -25
+#define DUAL_EXTRUDER_Z_PROBE_OFFSET_FROM_EXTRUDER 0
+
+#define SWITCH_STROKE_EXTRUDER0  0.5
+#define SWITCH_STROKE_EXTRUDER1  0.9
 
 // Certain types of probes need to stay away from edges
 #define MIN_PROBE_EDGE 5
@@ -1048,9 +1110,13 @@
   extern float m_home_offset[XN];
   extern float l_home_offset[XN];
 
-#define S_HOME_OFFSET_DEFAULT {-7, -5, 0, 0}
-#define M_HOME_OFFSET_DEFAULT {-15.5, -7, 0, 0}
-#define L_HOME_OFFSET_DEFAULT {-19, -10, 0, 0}
+  #define S_HOME_OFFSET_DEFAULT {-7, -5, 0}
+  #define S_HOME_OFFSET_DEFAULT_DUAL_EXTRUDER {-36.5, -8.5, 0}
+  #define M_HOME_OFFSET_DEFAULT {-15.5, -7, 0}
+  #define M_HOME_OFFSET_DEFAULT_DUAL_EXTRUDER {-45, -10.5, 0}
+  #define L_HOME_OFFSET_DEFAULT {-19, -10, 0}
+  #define L_HOME_OFFSET_DEFAULT_DUAL_EXTRUDER {-48.5, -13.5, 0}
+
 #endif //DISABLE(SW_MACHINE_SIZE)
 
 // The size of the print bed
@@ -1342,7 +1408,8 @@
 #endif
 
 // Homing speeds (mm/m)
-#define HOMING_FEEDRATE_XY (50*60)
+#define HOMING_FEEDRATE_X (30*60)
+#define HOMING_FEEDRATE_Y (50*60)
 #define HOMING_FEEDRATE_Z  (10*60)
 #define HOMING_FEEDRATE_B  (30*60)
 

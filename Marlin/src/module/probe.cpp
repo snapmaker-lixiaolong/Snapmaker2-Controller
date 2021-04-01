@@ -56,6 +56,8 @@
 #endif
 
 float zprobe_zoffset; // Initialized by settings.load()
+float xprobe_offset_from_extruder = X_PROBE_OFFSET_FROM_EXTRUDER;
+float yprobe_offset_from_extruder = Y_PROBE_OFFSET_FROM_EXTRUDER;
 
 #if ENABLED(BLTOUCH)
   #include "../feature/bltouch.h"
@@ -677,6 +679,7 @@ static float run_z_probe() {
 
     // Return the average value of all probes
     const float measured_z = probes_total * (1.0f / (MULTIPLE_PROBING - 1));
+    LOG_I("probes_total: %f, measured_z: %f\n", probes_total, measured_z);
 
   #elif MULTIPLE_PROBING == 2
 
@@ -724,8 +727,8 @@ float probe_pt(const float &rx, const float &ry, const ProbePtRaise raise_after/
   SERIAL_ECHOLNPAIR("ProbeX:", rx, " ProbeY:", ry, "Avtive:", probe_relative);
   if (probe_relative) {
     if (!position_is_reachable_by_probe(rx, ry)) { return NAN;}  // The given position is in terms of the probe
-    nx -= (X_PROBE_OFFSET_FROM_EXTRUDER);                     // Get the nozzle position
-    ny -= (Y_PROBE_OFFSET_FROM_EXTRUDER);
+    nx -= (xprobe_offset_from_extruder);                     // Get the nozzle position
+    ny -= (yprobe_offset_from_extruder);
   }
   else if (!position_is_reachable(nx, ny)) return NAN;        // The given position is in terms of the nozzle
 
@@ -744,6 +747,9 @@ float probe_pt(const float &rx, const float &ry, const ProbePtRaise raise_after/
   // Move the probe to the starting XYZ
   LOG_I("Move to X: %.2f, Y: %.2f, Z: %.2f\n", nx, ny, nz);
   do_blocking_move_to(nx, ny, nz);
+
+  LOG_I("probe_pt\n");
+  endstops.M119();
 
   float measured_z = NAN;
   if (!DEPLOY_PROBE()) {

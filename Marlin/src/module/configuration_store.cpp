@@ -37,7 +37,7 @@
  */
 
 // Change EEPROM version if the structure changes
-#define EEPROM_VERSION "V69"
+#define EEPROM_VERSION "V71"
 #define EEPROM_OFFSET 100
 
 // Check the integrity of data offsets.
@@ -2116,6 +2116,10 @@ void MarlinSettings::reset() {
 
   #if HAS_HOTEND_OFFSET
     reset_hotend_offsets();
+  #endif
+
+  #if EXTRUDERS > 1
+    reset_tool_change_params();
   #endif
 
   #if EXTRUDERS > 1

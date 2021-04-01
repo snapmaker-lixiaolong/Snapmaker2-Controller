@@ -89,6 +89,9 @@ extern int16_t feedrate_percentage;
 // The active extruder (tool). Set with T<extruder> command.
 #if EXTRUDERS > 1
   extern uint8_t active_extruder;
+  extern uint8_t active_probe_sensor;
+  extern float switch_stroke_extruder0;
+  extern float switch_stroke_extruder1;
 #else
   constexpr uint8_t active_extruder = 0;
 #endif
@@ -135,6 +138,7 @@ XN_DEFS(signed char, home_dir, HOME_DIR);
 
 #if HAS_HOTEND_OFFSET
   extern float hotend_offset[XYZ][HOTENDS];
+  extern float hotend_offset_z_temp;
   void reset_hotend_offsets();
 #else
   constexpr float hotend_offset[XYZ][HOTENDS] = { { 0 }, { 0 }, { 0 } };
@@ -333,8 +337,8 @@ void homeaxis(const AxisEnum axis);
           && WITHIN(rx, MIN_PROBE_X - slop, MAX_PROBE_X + slop)
           && WITHIN(ry, MIN_PROBE_Y - slop, MAX_PROBE_Y + slop);
       */
-      return  WITHIN(rx, X_MIN_POS + home_offset[X_AXIS], X_MAX_POS + home_offset[X_AXIS])
-          && WITHIN(ry, Y_MIN_POS + home_offset[Y_AXIS], Y_MAX_POS + home_offset[Y_AXIS]);
+      return  WITHIN(rx, X_MIN_POS, X_MAX_POS)
+          && WITHIN(ry, Y_MIN_POS, Y_MAX_POS);
     }
   #endif
 
@@ -419,3 +423,5 @@ FORCE_INLINE void  move_to_limited_x(const float x, const float fr_mm_s) {
   float target[X_TO_E] = {x, current_position[Y_AXIS], current_position[Z_AXIS], current_position[B_AXIS], current_position[E_AXIS]};
   move_to_limited_position(target, fr_mm_s);
 }
+
+void get_destination_from_logic(float (&logic_position)[X_TO_E]);

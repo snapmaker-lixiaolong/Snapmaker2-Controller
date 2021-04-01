@@ -21,11 +21,14 @@
 #ifndef SNAPMAKER_BED_LEVEL_H_
 #define SNAPMAKER_BED_LEVEL_H_
 
+#include "../../../Marlin/src/inc/MarlinConfig.h"
 #include "../hmi/event_handler.h"
 
 enum LevelMode: uint8_t {
   LEVEL_MODE_AUTO = 0,
   LEVEL_MODE_MANUAL,
+
+  LEVEL_MODE_AUTO_NO_ADJUST,
 
   LEVEL_MODE_INVALD
 };
@@ -39,9 +42,14 @@ enum LevelMode: uint8_t {
 
 class BedLevelService {
   public:
+    ErrCode DoXCalibration(SSTP_Event_t &event);
+    ErrCode ApplyXCalibration(SSTP_Event_t &event);
+    ErrCode DoYCalibration(SSTP_Event_t &event);
+    ErrCode ApplyYCalibration(SSTP_Event_t &event);
     ErrCode DoAutoLeveling(SSTP_Event_t &event);
     ErrCode DoManualLeveling(SSTP_Event_t &event);
     ErrCode SetManualLevelingPoint(SSTP_Event_t &event);
+    ErrCode SwitchToExtruder1ForBedLevel(SSTP_Event_t &event);
     ErrCode AdjustZOffsetInLeveling(SSTP_Event_t &event);
     ErrCode SaveAndExitLeveling(SSTP_Event_t &event);
     ErrCode ExitLeveling(SSTP_Event_t &event);
@@ -65,6 +73,12 @@ class BedLevelService {
     bool  live_z_offset_updated_ = false;
 
     float MeshPointZ[MESH_POINT_SIZE];
+    float ExtrudersMeshPointZ[EXTRUDERS][MESH_POINT_SIZE];
+
+    int16_t extruder0_temp;
+    int16_t extruder1_temp;
+    int16_t bed_temp;
+    float e_factor;
 };
 
 extern BedLevelService levelservice;
