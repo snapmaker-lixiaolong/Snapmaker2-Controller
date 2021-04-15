@@ -29,7 +29,7 @@
 #define MAX_CALI_SPEED_Z  40
 
 #define CALI_SPEED_XY   50
-#define CALI_SPEED_Z    30
+#define CALI_SPEED_Z    15
 
 #define Z_POS_BEFORE_CALI 20
 #define Z_POS_CALI_OFFSET 15

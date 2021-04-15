@@ -75,6 +75,10 @@ void GcodeSuite::M1005() {
     SERIAL_ECHOLN("L");
     break;
 
+  case MACHINE_SIZE_F500:
+    SERIAL_ECHOLN("F500");
+    break;
+
   default:
     SERIAL_ECHOLN("U");
     break;

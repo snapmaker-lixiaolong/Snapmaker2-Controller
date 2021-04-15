@@ -246,9 +246,10 @@ millis_t max_inactive_time, // = 0
   float MAGNET_X_SPAN = 114;
   float MAGNET_Y_SPAN = 114;
 
-  float s_home_offset[XN] = S_HOME_OFFSET_DEFAULT;
-  float m_home_offset[XN] = M_HOME_OFFSET_DEFAULT;
-  float l_home_offset[XN] = L_HOME_OFFSET_DEFAULT;
+  float s_home_offset[XN]    = S_HOME_OFFSET_DEFAULT;
+  float m_home_offset[XN]    = M_HOME_OFFSET_DEFAULT;
+  float l_home_offset[XN]    = L_HOME_OFFSET_DEFAULT;
+  float f500_home_offset[XN] = F500_HOME_OFFSET_DEFAULT;
 #endif //ENABLED(SW_MACHINE_SIZE)
 
 uint32_t GRID_MAX_POINTS_X;
@@ -271,11 +272,13 @@ void reset_homeoffset() {
   float s_home_offset_def[XN] = S_HOME_OFFSET_DEFAULT;
   float m_home_offset_def[XN] = M_HOME_OFFSET_DEFAULT;
   float l_home_offset_def[XN] = L_HOME_OFFSET_DEFAULT;
+  float f500_home_offset_def[XN] = F500_HOME_OFFSET_DEFAULT;
 
   LOOP_XN(i) {
     s_home_offset[i] = s_home_offset_def[i];
     m_home_offset[i] = m_home_offset_def[i];
     l_home_offset[i] = l_home_offset_def[i];
+    f500_home_offset[i] = f500_home_offset_def[i];
   }
 
   LOOP_XYZ(i) {
@@ -288,6 +291,9 @@ void reset_homeoffset() {
         break;
       case MACHINE_SIZE_A350:
         home_offset[i] = l_home_offset[i];
+        break;
+      case MACHINE_SIZE_F500:
+        home_offset[i] = f500_home_offset[i];
         break;
       default:
         break;

@@ -45,7 +45,8 @@ enum MachineSize {
 
   MACHINE_SIZE_A150,
   MACHINE_SIZE_A250,
-  MACHINE_SIZE_A350
+  MACHINE_SIZE_A350,
+  MACHINE_SIZE_F500
 };
 
 class Linear: public ModuleBase  {

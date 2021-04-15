@@ -33,6 +33,8 @@
 #define DEBUG_OUT ENABLED(DEBUG_LEVELING_FEATURE)
 #include "../../../core/debug_out.h"
 #include "../../../../../snapmaker/src/snapmaker.h"
+#include "../../../../../snapmaker/src/module/toolhead_3dp.h"
+#include "../../../module/endstops.h"
 
 int bilinear_grid_spacing[2], bilinear_start[2];
 float bilinear_grid_factor[2],
@@ -464,7 +466,7 @@ uint8_t auto_probing(bool reply_screen, bool fast_leveling) {
   float z;
 
   int dir_idx = 0;
-  do_blocking_move_to_z(22, 10);
+  do_blocking_move_to_z(20, 10);
 
   for (int k = 0; k < GRID_MAX_POINTS_X * GRID_MAX_POINTS_Y; ++k) {
     LOG_I("Probing No. %d\n", k);
@@ -475,6 +477,7 @@ uint8_t auto_probing(bool reply_screen, bool fast_leveling) {
       z = probe_pt(RAW_X_POSITION(_GET_MESH_X(cur_x)), RAW_Y_POSITION(_GET_MESH_Y(cur_y)), PROBE_PT_NONE); // raw position
     z_values[cur_x][cur_y] = z;
     visited[cur_x][cur_y] = true;
+    LOG_I("probed z_value: %f\n", z);
     if (isnan(z)) {
       SERIAL_ECHOLNPGM("auto probing fail !");
       reset_bed_level();
@@ -500,6 +503,8 @@ uint8_t auto_probing(bool reply_screen, bool fast_leveling) {
     cur_y = new_y;
   }
 
+  printer1->SetBLTouch(90);
+  //endstops.enable_z_probe(false);
 
   // if fast_leveling is true, over directly. Otherwise move nozzle to current position of probe
   if (!fast_leveling) {

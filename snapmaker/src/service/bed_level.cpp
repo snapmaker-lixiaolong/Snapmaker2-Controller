@@ -75,8 +75,8 @@ ErrCode BedLevelService::DoAutoLeveling(SSTP_Event_t &event) {
   probe_sensor = 1;
 
   if (probe_sensor == 1) {
-    x_probe_offset_from_nozzle = X_PROBE_OFFSET_FROM_EXTRUDER + 15.6;
-    y_probe_offset_from_nozzle = Y_PROBE_OFFSET_FROM_EXTRUDER - 4;
+    x_probe_offset_from_nozzle = -28.6; // X_PROBE_OFFSET_FROM_EXTRUDER + 15.6;
+    y_probe_offset_from_nozzle = -18.15; // Y_PROBE_OFFSET_FROM_EXTRUDER - 1;
   }
   else if (probe_sensor == 0) {
     x_probe_offset_from_nozzle = X_PROBE_OFFSET_FROM_EXTRUDER;
@@ -121,8 +121,8 @@ ErrCode BedLevelService::DoAutoLeveling(SSTP_Event_t &event) {
     else
       err = auto_probing(true, true);
 
-    printer1->SetBLTouch(90);
-    endstops.enable_z_probe(false);
+    //printer1->SetBLTouch(90);
+    //endstops.enable_z_probe(false);
 
     // Recover the Z max feedrate to 20mm/s
     planner.settings.max_feedrate_mm_s[Z_AXIS] = orig_max_z_speed;

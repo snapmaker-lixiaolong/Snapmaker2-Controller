@@ -80,7 +80,7 @@ void GcodeSuite::G2029() {
     buff[0] = level_points;
     buff[1] = sensor;
 
-    event.op_code = 0x11;
+    event.op_code = 2;
     event.data = buff;
     event.length = 2;
     event.id = 9;
