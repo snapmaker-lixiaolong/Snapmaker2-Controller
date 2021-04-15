@@ -291,7 +291,7 @@ void QuickStopService::TurnOffPower() {
   BreathLightClose();
 
   if (ModuleBase::toolhead() == MODULE_TOOLHEAD_LASER) {
-      laser.TurnOff();
+      laser->TurnOff();
   }
 }
 
@@ -308,8 +308,8 @@ void QuickStopService::EmergencyStop() {
       printer1->SetFan(0, 0);
       break;
     case MACHINE_TYPE_LASER:
-      laser.SetCameraLight(0);
-      laser.SetFanPower(0);
+      laser->SetCameraLight(0);
+      laser->SetFanPower(0);
       break;
     case MACHINE_TYPE_UNDEFINE:
       break;

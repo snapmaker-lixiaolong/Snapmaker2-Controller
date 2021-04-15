@@ -84,7 +84,7 @@ enum LaserCameraCommand {
 
 class ToolHeadLaser: public ModuleBase {
   public:
-		ToolHeadLaser(): ModuleBase(MODULE_DEVICE_ID_LASER) {
+		ToolHeadLaser(ModuleDeviceID id): ModuleBase(id) {
       power_limit_ = 100;
       power_pwm_   = 0;
       power_val_   = 0;
@@ -106,7 +106,7 @@ class ToolHeadLaser: public ModuleBase {
 
     void TurnOn();
     void TurnOff();
-  
+
     void SetFanPower(uint8_t power);  // power 0 - 100
 
     void SetPower(float power);       // change power_val_ and power_pwm_ but not change actual output
@@ -127,6 +127,7 @@ class ToolHeadLaser: public ModuleBase {
     ErrCode GetCameraBtMAC(SSTP_Event_t &event);
     ErrCode ReadBluetoothVer();
     void SetCameraLight(uint8_t state);
+    void SetAutoFocusLight(uint8_t state);
 
     void Process();
 
@@ -179,7 +180,8 @@ class ToolHeadLaser: public ModuleBase {
     UartHost esp32_;
 };
 
-
-extern ToolHeadLaser laser;
+extern ToolHeadLaser *laser;
+extern ToolHeadLaser laser_low_power;
+extern ToolHeadLaser laser_high_power;
 
 #endif  // #ifndef TOOLHEAD_LASER_H_

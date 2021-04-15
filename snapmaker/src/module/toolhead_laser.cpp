@@ -41,7 +41,10 @@
 #define TimSetPwm(n)  Tim1SetCCR4(n)
 #define TimGetPwm()  Tim1GetCCR4()
 
-ToolHeadLaser laser;
+ToolHeadLaser laser_low_power(MODULE_DEVICE_ID_LASER);
+ToolHeadLaser laser_high_power(MODULE_DEVICE_ID_HIGH_POWER_LASER);
+
+ToolHeadLaser *laser = &laser_low_power;
 
 extern void Tim1SetCCR4(uint16_t pwm);
 extern uint16_t Tim1GetCCR4();
@@ -56,7 +59,7 @@ static __attribute__((section(".data"))) uint8_t power_table[]= {
 };
 
 static void CallbackAckLaserFocus(CanStdDataFrame_t &cmd) {
-  laser.focus(cmd.data[0]<<8 | cmd.data[1]);
+  laser->focus(cmd.data[0]<<8 | cmd.data[1]);
 }
 
 
@@ -115,6 +118,8 @@ ErrCode ToolHeadLaser::Init(MAC_t &mac, uint8_t mac_index) {
 
   mac_index_ = mac_index;
   state_     = TOOLHEAD_LASER_STATE_OFF;
+
+  laser = this;
 
   // set toolhead
   SetToolhead(MODULE_TOOLHEAD_LASER);

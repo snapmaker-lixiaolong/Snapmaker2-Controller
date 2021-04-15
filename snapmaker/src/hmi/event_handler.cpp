@@ -222,7 +222,7 @@ static ErrCode HandleFileGcode(uint8_t *event_buff, uint16_t size) {
     if (systemservice.is_waiting_gcode) {
       if (systemservice.is_laser_on) {
         systemservice.is_laser_on = false;
-        laser.TurnOn();
+        laser->TurnOn();
       }
     }
 
@@ -340,19 +340,19 @@ static ErrCode ExitLeveling(SSTP_Event_t &event) {
 }
 
 static ErrCode GetFocalLength(SSTP_Event_t &event) {
-  return laser.GetFocus(event);
+  return laser->GetFocus(event);
 }
 
 static ErrCode SetFocalLength(SSTP_Event_t &event) {
-  return laser.SetFocus(event);
+  return laser->SetFocus(event);
 }
 
 static ErrCode DoManualFocusing(SSTP_Event_t &event) {
-  return laser.DoManualFocusing(event);
+  return laser->DoManualFocusing(event);
 }
 
 static ErrCode DoAutoFocusing(SSTP_Event_t &event) {
-  return laser.DoAutoFocusing(event);
+  return laser->DoAutoFocusing(event);
 }
 
 
@@ -512,15 +512,15 @@ EventCallback_t motion_event_cb[MOTION_OPC_MAX] = {
 
 
 static ErrCode SetCameraBtName(SSTP_Event_t &event) {
-  return laser.SetCameraBtName(event);
+  return laser->SetCameraBtName(event);
 }
 
 static ErrCode GetCameraBtName(SSTP_Event_t &event) {
-  return laser.GetCameraBtName(event);
+  return laser->GetCameraBtName(event);
 }
 
 static ErrCode GetCameraBtMAC(SSTP_Event_t &event) {
-  return laser.GetCameraBtMAC(event);
+  return laser->GetCameraBtMAC(event);
 }
 
 EventCallback_t camera_event_cb[CAMERA_OPC_MAX] = {

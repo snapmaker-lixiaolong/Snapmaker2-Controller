@@ -42,7 +42,7 @@
 
 extern ToolHead3DP printer_single;
 
-ModuleBase *static_modules[] = {&linear, &printer_single, &laser, &cnc, &enclosure, &emergency_stop, &linear_tmc, &rotaryModule, NULL};
+ModuleBase *static_modules[] = {&linear, &printer_single, &laser_low_power, &cnc, &enclosure, &emergency_stop, &linear_tmc, &rotaryModule, &laser_high_power, NULL};
 
 bool ModuleBase::lock_marlin_uart_ = false;
 LockMarlinUartSource ModuleBase::lock_marlin_source_ = LOCK_SOURCE_NONE;
