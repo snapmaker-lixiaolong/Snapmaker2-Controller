@@ -681,6 +681,93 @@ void ToolHeadLaser::SetCameraLight(uint8_t state) {
   LOG_I("set Laser Camera light:%d!\n", state);
 }
 
+ErrCode ToolHeadLaser::SetAutoFocusLight(uint8_t state) {
+  CanStdFuncCmd_t cmd;
+  uint8_t can_buffer[1];
+
+  switch (state) {
+  case 0:
+    state = 0;
+    break;
+
+  case 1:
+    state = 1;
+    break;
+
+  default:
+    return E_PARAM;
+  }
+
+  can_buffer[0] = state;
+  cmd.id        = MODULE_FUNC_SET_AUTOFOCUS_LIGHT;
+  cmd.data      = can_buffer;
+  cmd.length    = 1;
+
+  return canhost.SendStdCmdSync(cmd, 2000);
+}
+
+ErrCode ToolHeadLaser::SetLimitGesture(int16_t roll_min, int16_t roll_max, int16_t pitch_min, int16_t pitch_max) {
+  if ((roll_min < -180) || (roll_min > 180) || (roll_max < -180) || (roll_max > 180) || (pitch_min < -180) || (pitch_min > 180) || (pitch_max < -180) || (pitch_max > 180)) {
+    return E_PARAM;
+  }
+
+  roll_min_  = roll_min;
+  roll_max_  = roll_max;
+  pitch_min_ = pitch_min;
+  pitch_max_ = pitch_max;
+
+  CanStdFuncCmd_t cmd;
+  uint8_t can_buffer[8];
+  uint8_t index = 0;
+
+  can_buffer[index++] = roll_min >> 8;
+  can_buffer[index++] = roll_min & 0xff;
+  can_buffer[index++] = pitch_min >> 8;
+  can_buffer[index++] = pitch_max & 0xff;
+
+  cmd.id        = MODULE_FUNC_SET_LASER_LIMIT_GESTURE;
+  cmd.data      = can_buffer;
+  cmd.length    = index;
+
+  return canhost.SendStdCmd(cmd, 0);
+}
+
+ErrCode ToolHeadLaser::GetGesture(int16_t & roll, int16_t & pitch){
+  CanStdFuncCmd_t cmd;
+  ErrCode ret;
+  uint8_t can_buffer[8] = {0};
+
+  cmd.id        = MODULE_FUNC_SET_AUTOFOCUS_LIGHT;
+  cmd.data      = can_buffer;
+  cmd.length    = 0;
+
+  ret = canhost.SendStdCmdSync(cmd, 2000);
+  if (ret == E_SUCCESS) {
+    roll = roll_ = cmd.data[0] << 8 | cmd.data[1];
+    pitch = pitch_ = cmd.data[2] << 8 | cmd.data[3];
+    return E_SUCCESS;
+  }
+  else {
+    return E_FAILURE;
+  }
+}
+
+ErrCode ToolHeadLaser::SetLaserPower(uint32_t power) {
+  CanStdFuncCmd_t cmd;
+  uint8_t can_buffer[4];
+
+  can_buffer[0] = (power >> 24) & 0xff;
+  can_buffer[1] = (power >> 16) & 0xff;
+  can_buffer[2] = (power >> 8) & 0xff;
+  can_buffer[3] = power & 0xff;
+
+  cmd.id     = MODULE_FUNC_SET_LASER_POWER;
+  cmd.data   = can_buffer;
+  cmd.length = 4;
+
+  return canhost.SendStdCmd(cmd, 0);
+}
+
 void ToolHeadLaser::Process() {
   if (++timer_in_process_ < 100) return;
 

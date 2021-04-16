@@ -127,7 +127,11 @@ class ToolHeadLaser: public ModuleBase {
     ErrCode GetCameraBtMAC(SSTP_Event_t &event);
     ErrCode ReadBluetoothVer();
     void SetCameraLight(uint8_t state);
-    void SetAutoFocusLight(uint8_t state);
+
+    ErrCode SetAutoFocusLight(uint8_t state);
+    ErrCode SetLimitGesture(int16_t roll_min, int16_t roll_max, int16_t pitch_min, int16_t pitch_max);
+    ErrCode GetGesture(int16_t & roll, int16_t & pitch);
+    ErrCode SetLaserPower(uint32_t power);         // ajust the DAC output voltage to control the laser output power in milliwatts
 
     void Process();
 
@@ -178,6 +182,14 @@ class ToolHeadLaser: public ModuleBase {
     message_id_t msg_id_get_focus_;
 
     UartHost esp32_;
+
+    // six-axis sensor
+    int16_t roll_min_;
+    int16_t roll_max_;
+    int16_t pitch_min_;
+    int16_t pitch_max_;
+    int16_t roll_;          // current roll value
+    int16_t pitch_;         // current pitch value
 };
 
 extern ToolHeadLaser *laser;
