@@ -107,6 +107,8 @@ ErrCode BedLevelService::DoAutoLeveling(SSTP_Event_t &event) {
 
     endstops.enable_z_probe(true);
 
+    printer1->SetBLTouch(160);
+    vTaskDelay(pdMS_TO_TICKS(1000));
     printer1->SetProbeSensor(probe_sensor);
 
     // move quicky firstly to decrease the time
