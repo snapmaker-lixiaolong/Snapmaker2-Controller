@@ -38,6 +38,8 @@
 
 #define LASER_CLOSE_FAN_DELAY     (120)
 
+#define LASER_FUNC_ID_COUNT_MAX   (8)
+
 #define TimSetPwm(n)  Tim1SetCCR4(n)
 #define TimGetPwm()  Tim1GetCCR4()
 
@@ -67,10 +69,10 @@ ErrCode ToolHeadLaser::Init(MAC_t &mac, uint8_t mac_index) {
   ErrCode ret;
 
   CanExtCmd_t cmd;
-  uint8_t     func_buffer[16];
+  uint8_t     func_buffer[LASER_FUNC_ID_COUNT_MAX*2 + 2];
 
   Function_t    function;
-  message_id_t  message_id[4];
+  message_id_t  message_id[LASER_FUNC_ID_COUNT_MAX];
 
   ret = ModuleBase::InitModule8p(mac, E0_DIR_PIN, 0);
   if (ret != E_SUCCESS)
@@ -159,6 +161,16 @@ void ToolHeadLaser::SetOutput(float power) {
   TurnOn();
 }
 
+void ToolHeadLaser::SetOutput(uint32_t power_percentage) {
+  if (power_percentage > 0) {
+    SetLaserPower(power_percentage);
+    tim_pwm(256);
+  }
+  else {
+    tim_pwm(0);
+    SetLaserPower(power_percentage);
+  }
+}
 
 void ToolHeadLaser::SetPower(float power) {
   int   integer;
@@ -454,7 +466,7 @@ ErrCode ToolHeadLaser::DoAutoFocusing(SSTP_Event_t &event) {
     planner.synchronize();
 
     // Laser off
-    SetOutput(0);
+    SetOutput((float)0);
 
     // Move up Z increase
     if(i != (Count - 1))
@@ -765,7 +777,7 @@ ErrCode ToolHeadLaser::SetLaserPower(uint32_t power) {
   cmd.data   = can_buffer;
   cmd.length = 4;
 
-  return canhost.SendStdCmd(cmd, 0);
+  return canhost.SendStdCmd(cmd);
 }
 
 void ToolHeadLaser::Process() {

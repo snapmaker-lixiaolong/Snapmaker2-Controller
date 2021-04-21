@@ -111,6 +111,7 @@ class ToolHeadLaser: public ModuleBase {
 
     void SetPower(float power);       // change power_val_ and power_pwm_ but not change actual output
     void SetOutput(float power);      // change power_val_, power_pwm_ and actual output
+    void SetOutput(uint32_t power_percentage);
     void SetPowerLimit(float limit);  // change power_val_, power_pwm_ and power_limit_, may change actual output if current output is beyond limit
 
     void TryCloseFan();

@@ -24,6 +24,8 @@
 #include "../../module/motion.h"
 
 #include "../../Marlin.h"
+#include "../../../../snapmaker/src/module/toolhead_laser.h"
+#include "../../module/planner.h"
 
 #if BOTH(FWRETRACT, FWRETRACT_AUTORETRACT)
   #include "../../feature/fwretract.h"
@@ -54,6 +56,10 @@ void GcodeSuite::G0_G1(
       && !axis_unhomed_error(parser.seen('X'), parser.seen('Y'), parser.seen('Z'))
     #endif
   ) {
+
+    if (parser.seen('S')) {
+      laser->SetOutput((uint32_t)parser.ulongval('S', (uint32_t)0));
+    }
 
     #ifdef G0_FEEDRATE
       float saved_feedrate_mm_s;
@@ -107,6 +113,8 @@ void GcodeSuite::G0_G1(
     #else
       prepare_move_to_destination();
     #endif
+
+    planner.synchronize();
 
     #ifdef G0_FEEDRATE
       // Restore the motion mode feedrate

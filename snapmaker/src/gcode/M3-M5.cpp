@@ -75,6 +75,9 @@ void GcodeSuite::M3_M4(const bool is_M4) {
     if(parser.seen('P')) {
       laser->SetOutput(parser.value_float());
     }
+    else if (parser.seen('S')) {
+      laser->SetOutput((uint32_t)parser.ulongval('S', (uint32_t)0));
+    }
     else {
       laser->TurnOn();
     }

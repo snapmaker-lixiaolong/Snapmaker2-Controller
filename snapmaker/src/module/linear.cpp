@@ -251,34 +251,34 @@ ErrCode Linear::CheckModuleType() {
 
   float axis_steps_per_unit[] = DEFAULT_AXIS_STEPS_PER_UNIT;
 
-  // if using 2.5 generation linear modules, check if the linear module lead is correct for each axis
-  if (device_id == MODULE_DEVICE_ID_LINEAR_TMC) {
-    for (i = LINEAR_AXIS_X1; i < LINEAR_AXIS_MAX; i++) {
-      if (mac_index_[i] == 0xff) continue;
+  // // if using 2.5 generation linear modules, check if the linear module lead is correct for each axis
+  // if (device_id == MODULE_DEVICE_ID_LINEAR_TMC) {
+  //   for (i = LINEAR_AXIS_X1; i < LINEAR_AXIS_MAX; i++) {
+  //     if (mac_index_[i] == 0xff) continue;
 
-      switch (i) {
-        case LINEAR_AXIS_X1:
-        case LINEAR_AXIS_X2:
-        case LINEAR_AXIS_Y1:
-        case LINEAR_AXIS_Y2:
-          if (lead_[i] != MODULE_LINEAR_PITCH_20) {
-            systemservice.ThrowException(EHOST_LINEAR, ETYPE_LINEAR_MODULE_LEAD_ERROR);
-            return E_FAILURE;
-          }
-          break;
-        case LINEAR_AXIS_Z1:
-        case LINEAR_AXIS_Z2:
-        case LINEAR_AXIS_Z3:
-          if (lead_[i] != MODULE_LINEAR_PITCH_8) {
-            systemservice.ThrowException(EHOST_LINEAR, ETYPE_LINEAR_MODULE_LEAD_ERROR);
-            return E_FAILURE;
-          }
-          break;
-        default:
-          break;
-      }
-    }
-  }
+  //     switch (i) {
+  //       case LINEAR_AXIS_X1:
+  //       case LINEAR_AXIS_X2:
+  //       case LINEAR_AXIS_Y1:
+  //       case LINEAR_AXIS_Y2:
+  //         if (lead_[i] != MODULE_LINEAR_PITCH_20) {
+  //           systemservice.ThrowException(EHOST_LINEAR, ETYPE_LINEAR_MODULE_LEAD_ERROR);
+  //           return E_FAILURE;
+  //         }
+  //         break;
+  //       case LINEAR_AXIS_Z1:
+  //       case LINEAR_AXIS_Z2:
+  //       case LINEAR_AXIS_Z3:
+  //         if (lead_[i] != MODULE_LINEAR_PITCH_8) {
+  //           systemservice.ThrowException(EHOST_LINEAR, ETYPE_LINEAR_MODULE_LEAD_ERROR);
+  //           return E_FAILURE;
+  //         }
+  //         break;
+  //       default:
+  //         break;
+  //     }
+  //   }
+  // }
 
   if ((mac_index_[LINEAR_AXIS_X1] != 0xff) || (mac_index_[LINEAR_AXIS_X2] != 0xff)) {
     axis_steps_per_unit[X_AXIS] = mac_index_[LINEAR_AXIS_X1] != 0xff ? lead_[LINEAR_AXIS_X1] : lead_[LINEAR_AXIS_X2];
@@ -334,13 +334,15 @@ MachineSize Linear::UpdateMachineSize() {
     return (machine_size_ = MACHINE_SIZE_UNKNOWN);
   }
 
-  if (CheckModuleType() != E_SUCCESS) {
-    X_MAX_POS = 0;
-    Y_MAX_POS = 0;
-    Z_MAX_POS = 0;
-    systemservice.ThrowException(EHOST_MC, ETYPE_NO_HOST);
-    return (machine_size_ = MACHINE_SIZE_UNKNOWN);
-  }
+  CheckModuleType();
+
+  // if (CheckModuleType() != E_SUCCESS) {
+  //   X_MAX_POS = 0;
+  //   Y_MAX_POS = 0;
+  //   Z_MAX_POS = 0;
+  //   systemservice.ThrowException(EHOST_MC, ETYPE_NO_HOST);
+  //   return (machine_size_ = MACHINE_SIZE_UNKNOWN);
+  // }
 
   if (length_[LINEAR_AXIS_X1] < 200) {
     LOG_I("Model: A150\n");

@@ -765,7 +765,7 @@ assign_message_id:
 
 ErrCode CanHost::UpgradeModules(uint32_t fw_addr, uint32_t length) {
   int   i;
-  
+
   SetReceiverSpeed(RECEIVER_SPEED_HIGH);
   // upgrade dynamic modules
   for (i = 0; i < MODULE_SUPPORT_CONNECTED_MAX; i++) {
