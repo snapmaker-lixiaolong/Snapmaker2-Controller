@@ -163,12 +163,12 @@ void ToolHeadLaser::SetOutput(float power) {
 
 void ToolHeadLaser::SetOutput(uint32_t power_percentage) {
   if (power_percentage > 0) {
-    SetLaserPower(power_percentage);
-    tim_pwm(256);
+    SetLaserPower(100);
+    tim_pwm(256*power_percentage/100);
   }
   else {
     tim_pwm(0);
-    SetLaserPower(power_percentage);
+    SetLaserPower(0);
   }
 }
 
