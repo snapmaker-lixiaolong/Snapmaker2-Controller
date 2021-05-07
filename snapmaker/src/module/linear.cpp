@@ -345,8 +345,8 @@ MachineSize Linear::UpdateMachineSize() {
 
   if (length_[LINEAR_AXIS_X1] > 350) {
     LOG_I("Model: F500\n");
-    X_MAX_POS = 410;
-    Y_MAX_POS = 550;
+    X_MAX_POS = 470;
+    Y_MAX_POS = 520;
     Z_MAX_POS = 535;
 
     X_HOME_DIR = -1;
@@ -358,19 +358,19 @@ MachineSize Linear::UpdateMachineSize() {
 
     LOOP_XN(i) home_offset[i] = f500_home_offset[i];
 
-    X_DEF_SIZE = 400;
-    Y_DEF_SIZE = 530;
-    Z_DEF_SIZE = 520; // unused & spec is lager than actual size.  334 - 6 = 328?
+    X_DEF_SIZE = 460;
+    Y_DEF_SIZE = 510;
+    Z_DEF_SIZE = 535; // unused & spec is lager than actual size.  334 - 6 = 328?
 
-    MAGNET_X_SPAN = 354;
-    MAGNET_Y_SPAN = 494;
+    MAGNET_X_SPAN = 404;
+    MAGNET_Y_SPAN = 464;
 
     machine_size_ = MACHINE_SIZE_F500;
 
     float axis_steps_per_unit[] = DEFAULT_AXIS_STEPS_PER_UNIT;
-    axis_steps_per_unit[X_AXIS] = MODULE_LINEAR_PITCH_6;
-    axis_steps_per_unit[Y_AXIS] = MODULE_LINEAR_PITCH_6;
-    axis_steps_per_unit[Z_AXIS] = MODULE_LINEAR_PITCH_6;
+    axis_steps_per_unit[X_AXIS] = MODULE_LINEAR_PITCH_10;
+    axis_steps_per_unit[Y_AXIS] = MODULE_LINEAR_PITCH_10;
+    axis_steps_per_unit[Z_AXIS] = MODULE_LINEAR_PITCH_10;
 
     LOOP_XYZ(i) {
       planner.settings.axis_steps_per_mm[i] = axis_steps_per_unit[i];
