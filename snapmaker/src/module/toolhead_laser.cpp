@@ -62,15 +62,43 @@ static void CallbackAckLaserFocus(CanStdDataFrame_t &cmd) {
   laser->focus(cmd.data[0]<<8 | cmd.data[1]);
 }
 
+static void CallbackAckReportGesture(CanStdDataFrame_t &cmd) {
+  switch (cmd.data[0]) {
+    case 0:
+      ((uint8_t *)&laser->yaw_)[0] = cmd.data[1];
+      ((uint8_t *)&laser->yaw_)[1] = cmd.data[2];
+      ((uint8_t *)&laser->yaw_)[2] = cmd.data[3];
+      ((uint8_t *)&laser->yaw_)[3] = cmd.data[4];
+      laser->yaw_updated_ = true;
+      break;
+    case 1:
+      ((uint8_t *)&laser->roll_)[0] = cmd.data[1];
+      ((uint8_t *)&laser->roll_)[1] = cmd.data[2];
+      ((uint8_t *)&laser->roll_)[2] = cmd.data[3];
+      ((uint8_t *)&laser->roll_)[3] = cmd.data[4];
+      laser->roll_updated_ = true;
+      break;
+    case 2:
+      ((uint8_t *)&laser->pitch_)[0] = cmd.data[1];
+      ((uint8_t *)&laser->pitch_)[1] = cmd.data[2];
+      ((uint8_t *)&laser->pitch_)[2] = cmd.data[3];
+      ((uint8_t *)&laser->pitch_)[3] = cmd.data[4];
+      laser->pitch_updated_ = true;
+      break;
+    default:
+      break;
+  }
+}
+
 
 ErrCode ToolHeadLaser::Init(MAC_t &mac, uint8_t mac_index) {
   ErrCode ret;
 
   CanExtCmd_t cmd;
-  uint8_t     func_buffer[16];
+  uint8_t     func_buffer[2*8 + 2];
 
   Function_t    function;
-  message_id_t  message_id[4];
+  message_id_t  message_id[8];
 
   ret = ModuleBase::InitModule8p(mac, E0_DIR_PIN, 0);
   if (ret != E_SUCCESS)
@@ -104,8 +132,12 @@ ErrCode ToolHeadLaser::Init(MAC_t &mac, uint8_t mac_index) {
       message_id[i]     = canhost.RegisterFunction(function, CallbackAckLaserFocus);
       msg_id_get_focus_ = message_id[i];
     }
-    else
+    else if (function.id == MODULE_FUNC_REPORT_LASER_GESTURE) {
+      message_id[i] = canhost.RegisterFunction(function, CallbackAckReportGesture);
+    }
+    else {
       message_id[i] = canhost.RegisterFunction(function, NULL);
+    }
 
     if (function.id == MODULE_FUNC_SET_FAN1)
       msg_id_set_fan_ = message_id[i];
@@ -768,10 +800,53 @@ ErrCode ToolHeadLaser::SetLaserPower(uint32_t power) {
   return canhost.SendStdCmd(cmd, 0);
 }
 
+ErrCode ToolHeadLaser::UpdateGestureInfo (uint16_t interval) {
+  uint16_t delay_count = 100;
+  uint8_t buff[2] = {0};
+
+  yaw_updated_   = false;
+  roll_updated_  = false;
+  pitch_updated_ = false;
+
+  buff[0] = (interval >> 8) & 0xff;
+  buff[1] = interval & 0xff;
+
+  CanStdFuncCmd_t cmd;
+  cmd.id     = MODULE_FUNC_REPORT_LASER_GESTURE;
+  cmd.data   = buff;
+  cmd.length = 2;
+
+  ErrCode ret = canhost.SendStdCmd(cmd, 0);
+  // while (yaw_updated_ != true || roll_updated_ != true || pitch_updated_ != true) {
+  //   vTaskDelay(portTICK_PERIOD_MS *10);
+  //   if (--delay_count == 0) {
+  //     return E_FAILURE;
+  //   }
+  // }
+
+  LOG_I("Update gesture info: %d\n", ret);
+
+  LOG_I("yaw: %f, roll: %f, pitch: %f\n", yaw_, roll_, pitch_);
+
+  return E_SUCCESS;
+}
+
+void ToolHeadLaser::SetDisplayInterval (uint16_t interval) {
+  display_interval_ = interval;
+}
+
 void ToolHeadLaser::Process() {
-  if (++timer_in_process_ < 100) return;
+  // if (++timer_in_process_ < 100) return;
 
-  timer_in_process_ = 0;
+  // timer_in_process_ = 0;
 
-  TryCloseFan();
+  if (display_interval_ == 0) return;
+
+  if (time_elaspe_ + display_interval_ < millis()) {
+    time_elaspe_ = millis();
+
+    LOG_I("yaw: %f, roll: %f, pitch: %f\n", yaw_, roll_, pitch_);
+  }
+
+  // TryCloseFan();
 }

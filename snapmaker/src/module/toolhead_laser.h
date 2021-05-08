@@ -133,6 +133,9 @@ class ToolHeadLaser: public ModuleBase {
     ErrCode GetGesture(int16_t & roll, int16_t & pitch);
     ErrCode SetLaserPower(uint32_t power);         // ajust the DAC output voltage to control the laser output power in milliwatts
 
+    void SetDisplayInterval (uint16_t interval);
+    ErrCode UpdateGestureInfo(uint16_t interval);
+
     void Process();
 
     uint32_t mac(uint8_t sub_index = 0) { return canhost.mac(mac_index_); }
@@ -188,8 +191,17 @@ class ToolHeadLaser: public ModuleBase {
     int16_t roll_max_;
     int16_t pitch_min_;
     int16_t pitch_max_;
-    int16_t roll_;          // current roll value
-    int16_t pitch_;         // current pitch value
+
+    uint16_t display_interval_;
+    uint32_t time_elaspe_;
+
+  public:
+    float yaw_;
+    float roll_;          // current roll value
+    float pitch_;         // current pitch value
+    bool yaw_updated_ = false;
+    bool roll_updated_ = false;
+    bool pitch_updated_ = false;
 };
 
 extern ToolHeadLaser *laser;

@@ -787,6 +787,8 @@ void GcodeSuite::execute_command(void) {
 
       case 2001: M2001(); break;
 
+      case 2021: M2021(); break;
+
       default: parser.unknown_command_error(); break;
     }
     break;
