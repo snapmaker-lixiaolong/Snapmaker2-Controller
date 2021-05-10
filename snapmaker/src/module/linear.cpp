@@ -334,12 +334,45 @@ MachineSize Linear::UpdateMachineSize() {
     return (machine_size_ = MACHINE_SIZE_UNKNOWN);
   }
 
-  if (CheckModuleType() != E_SUCCESS) {
-    X_MAX_POS = 0;
-    Y_MAX_POS = 0;
-    Z_MAX_POS = 0;
-    systemservice.ThrowException(EHOST_MC, ETYPE_NO_HOST);
-    return (machine_size_ = MACHINE_SIZE_UNKNOWN);
+  // if (CheckModuleType() != E_SUCCESS) {
+  //   X_MAX_POS = 0;
+  //   Y_MAX_POS = 0;
+  //   Z_MAX_POS = 0;
+  //   systemservice.ThrowException(EHOST_MC, ETYPE_NO_HOST);
+  //   return (machine_size_ = MACHINE_SIZE_UNKNOWN);
+  // }
+
+  if (length_[LINEAR_AXIS_X1] > 350) {
+    LOG_I("Model: C800\n");
+    X_MAX_POS = 750;
+    Y_MAX_POS = 750;
+    Z_MAX_POS = 150;
+    X_HOME_DIR = -1;
+    X_DIR = false;
+    Y_HOME_DIR = 1;
+    Y_DIR = true;
+    Z_HOME_DIR = 1;
+    Z_DIR = true;
+
+    LOOP_XN(i) home_offset[i] = c800_home_offset[i];
+
+    X_DEF_SIZE = 580;
+    Y_DEF_SIZE = 580;
+    Z_DEF_SIZE = 100; // unused & spec is lager than actual size.  334 - 6 = 328?
+
+    MAGNET_X_SPAN = 274;
+    MAGNET_Y_SPAN = 304;
+
+    machine_size_ = MACHINE_SIZE_A350;
+
+    LOOP_XYZ(i) {
+      planner.settings.axis_steps_per_mm[i] = MODULE_LINEAR_PITCH_10;
+      SERIAL_ECHOLNPAIR("axis index:", i, "  pitch:", planner.settings.axis_steps_per_mm[i]);
+    }
+
+    planner.refresh_positioning();
+
+    goto out;
   }
 
   if (length_[LINEAR_AXIS_X1] < 200) {

@@ -690,6 +690,7 @@
 #define DEFAULT_AXIS_STEPS_PER_UNIT   { 400, 400, 400, 888.89, 212.21 }
 
 #define MODULE_LINEAR_PITCH_20        160
+#define MODULE_LINEAR_PITCH_10        320
 #define MODULE_LINEAR_PITCH_8         400
 
 /**
@@ -1047,10 +1048,12 @@
   extern float s_home_offset[XN];
   extern float m_home_offset[XN];
   extern float l_home_offset[XN];
+  extern float c800_home_offset[XN];
 
 #define S_HOME_OFFSET_DEFAULT {-7, -5, 0, 0}
 #define M_HOME_OFFSET_DEFAULT {-15.5, -7, 0, 0}
 #define L_HOME_OFFSET_DEFAULT {-19, -10, 0, 0}
+#define C800_HOME_OFFSET_DEFAULT  {0, 0, 0, 0};
 #endif //DISABLE(SW_MACHINE_SIZE)
 
 // The size of the print bed
