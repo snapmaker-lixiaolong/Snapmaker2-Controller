@@ -347,7 +347,7 @@ MachineSize Linear::UpdateMachineSize() {
     LOG_I("Model: F500\n");
     X_MAX_POS = 470;
     Y_MAX_POS = 520;
-    Z_MAX_POS = 535;
+    Z_MAX_POS = 525;
 
     X_HOME_DIR = -1;
     X_DIR = false;
@@ -360,7 +360,7 @@ MachineSize Linear::UpdateMachineSize() {
 
     X_DEF_SIZE = 460;
     Y_DEF_SIZE = 510;
-    Z_DEF_SIZE = 535; // unused & spec is lager than actual size.  334 - 6 = 328?
+    Z_DEF_SIZE = 525; // unused & spec is lager than actual size.  334 - 6 = 328?
 
     MAGNET_X_SPAN = 404;
     MAGNET_Y_SPAN = 464;
@@ -368,8 +368,8 @@ MachineSize Linear::UpdateMachineSize() {
     machine_size_ = MACHINE_SIZE_F500;
 
     float axis_steps_per_unit[] = DEFAULT_AXIS_STEPS_PER_UNIT;
-    axis_steps_per_unit[X_AXIS] = MODULE_LINEAR_PITCH_10;
-    axis_steps_per_unit[Y_AXIS] = MODULE_LINEAR_PITCH_10;
+    axis_steps_per_unit[X_AXIS] = MODULE_LINEAR_PITCH_20;
+    axis_steps_per_unit[Y_AXIS] = MODULE_LINEAR_PITCH_20;
     axis_steps_per_unit[Z_AXIS] = MODULE_LINEAR_PITCH_10;
 
     LOOP_XYZ(i) {

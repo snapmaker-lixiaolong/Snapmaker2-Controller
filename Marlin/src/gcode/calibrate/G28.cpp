@@ -62,6 +62,8 @@
   #include "../snapmaker/src/module/linear.h"
 #endif
 
+#include "../../../../snapmaker/src/common/debug.h"
+
 #if ENABLED(QUICK_HOME)
 
   static void quick_home_xy() {
@@ -408,7 +410,7 @@ void GcodeSuite::G28(const bool always_home_all) {
       set_axis_is_at_home(B_AXIS);
     }
     sync_plan_position();
-  
+
   #endif // !DELTA (G28)
 
   /**
@@ -458,7 +460,8 @@ void GcodeSuite::G28(const bool always_home_all) {
   #endif
 
   #if (MOTHERBOARD == BOARD_SNAPMAKER_2_0)
-    if((ModuleBase::toolhead() == MODULE_TOOLHEAD_3DP) && (all_axes_homed())) {
+    if((ModuleBase::toolhead() == MODULE_TOOLHEAD_3DP)/* && (all_axes_homed())*/) {
+      LOG_I("enable bed leveling after home\n");
       set_bed_leveling_enabled(true);
       levelservice.ApplyLiveZOffset();
     }
