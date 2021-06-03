@@ -38,6 +38,12 @@ enum ToolheadLaserFanState {
   TOOLHEAD_LASER_FAN_STATE_INVALID
 };
 
+enum ToolHeadLaserGcodeType{
+  TOOLHEAD_LASER_GCODE_G28,
+  TOOLHEAD_LASER_GCODE_G1_SYNC,
+  TOOLHEAD_LASER_GCODE_G1_ASYNC,
+};
+
 
 enum ToolHeadLaserState {
   TOOLHEAD_LASER_STATE_OFFLINE,
@@ -135,6 +141,10 @@ class ToolHeadLaser: public ModuleBase {
 
     void SetDisplayInterval (uint16_t interval);
     ErrCode UpdateGestureInfo(uint16_t interval);
+    ErrCode LaserGoHomeSync();
+    ErrCode LaserGoHomeAsync();
+    ErrCode LaserMoveToDestinationSync(float position = 0, uint16_t speed = 0);
+    ErrCode LaserMoveToDestinationAsync(float position = 0, uint16_t speed = 0);
 
     void Process();
 

@@ -95,10 +95,10 @@ ErrCode ToolHeadLaser::Init(MAC_t &mac, uint8_t mac_index) {
   ErrCode ret;
 
   CanExtCmd_t cmd;
-  uint8_t     func_buffer[2*8 + 2];
+  uint8_t     func_buffer[2*10 + 2];
 
   Function_t    function;
-  message_id_t  message_id[8];
+  message_id_t  message_id[10];
 
   ret = ModuleBase::InitModule8p(mac, E0_DIR_PIN, 0);
   if (ret != E_SUCCESS)
@@ -833,6 +833,72 @@ ErrCode ToolHeadLaser::UpdateGestureInfo (uint16_t interval) {
 
 void ToolHeadLaser::SetDisplayInterval (uint16_t interval) {
   display_interval_ = interval;
+}
+
+ErrCode ToolHeadLaser::LaserGoHomeSync() {
+  CanStdFuncCmd_t cmd;
+  uint8_t can_buffer[8];
+  uint8_t index = 0;
+
+  can_buffer[index++] = (uint8_t)TOOLHEAD_LASER_GCODE_G28;
+  cmd.id        = MODULE_FUNC_LASER_MOVE_TO_DEST;
+  cmd.data      = can_buffer;
+  cmd.length    = index;
+
+  return canhost.SendStdCmdSync(cmd, 15000);
+}
+
+ErrCode ToolHeadLaser::LaserGoHomeAsync() {
+  CanStdFuncCmd_t cmd;
+  uint8_t can_buffer[8];
+  uint8_t index = 0;
+
+  can_buffer[index++] = (uint8_t)TOOLHEAD_LASER_GCODE_G28;
+  cmd.id     = MODULE_FUNC_LASER_MOVE_TO_DEST;
+  cmd.data   = can_buffer;
+  cmd.length = index;
+
+  return canhost.SendStdCmd(cmd, 0);
+}
+
+ErrCode ToolHeadLaser::LaserMoveToDestinationSync(float position, uint16_t speed) {
+  CanStdFuncCmd_t cmd;
+  uint8_t can_buffer[8];
+  uint8_t index = 0;
+
+  can_buffer[index++] = (uint8_t)TOOLHEAD_LASER_GCODE_G1_SYNC;
+  can_buffer[index++] = ((uint8_t *)&position)[3];
+  can_buffer[index++] = ((uint8_t *)&position)[2];
+  can_buffer[index++] = ((uint8_t *)&position)[1];
+  can_buffer[index++] = ((uint8_t *)&position)[0];
+  can_buffer[index++] = (speed >> 8) & 0xff;
+  can_buffer[index++] = speed & 0xff;
+
+  cmd.id        = MODULE_FUNC_LASER_MOVE_TO_DEST;
+  cmd.data      = can_buffer;
+  cmd.length    = index;
+
+  return canhost.SendStdCmdSync(cmd, 1000000);
+}
+
+ErrCode ToolHeadLaser::LaserMoveToDestinationAsync(float position, uint16_t speed) {
+  CanStdFuncCmd_t cmd;
+  uint8_t can_buffer[8];
+  uint8_t index = 0;
+
+  can_buffer[index++] = (uint8_t)TOOLHEAD_LASER_GCODE_G1_ASYNC;
+  can_buffer[index++] = ((uint8_t *)&position)[3];
+  can_buffer[index++] = ((uint8_t *)&position)[2];
+  can_buffer[index++] = ((uint8_t *)&position)[1];
+  can_buffer[index++] = ((uint8_t *)&position)[0];
+  can_buffer[index++] = (speed >> 8) & 0xff;
+  can_buffer[index++] = speed & 0xff;
+
+  cmd.id        = MODULE_FUNC_LASER_MOVE_TO_DEST;
+  cmd.data      = can_buffer;
+  cmd.length    = index;
+
+  return canhost.SendStdCmd(cmd, 0);
 }
 
 void ToolHeadLaser::Process() {

@@ -299,6 +299,10 @@ void GcodeSuite::execute_command(void) {
       #endif
       case 1029: G1029(); break;
 
+      case 1028: G1028(); break;
+
+      case 1001: G1001(); break;
+
       default: parser.unknown_command_error(); break;
     }
     break;
