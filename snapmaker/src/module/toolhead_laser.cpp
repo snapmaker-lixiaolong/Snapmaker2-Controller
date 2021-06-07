@@ -90,15 +90,23 @@ static void CallbackAckReportGesture(CanStdDataFrame_t &cmd) {
   }
 }
 
+static void CallbackAckReportLaserTemperature(CanStdDataFrame_t &cmd) {
+  laser->laser_temperature_ = cmd.data[0] << 8 | cmd.data[1];
+}
+
+void ToolHeadLaser::PrintLaserTemperature() {
+  uint16_t temp = laser->laser_temperature_ / 10;
+  LOG_I("Laser Temperature: %d\n", temp);
+}
 
 ErrCode ToolHeadLaser::Init(MAC_t &mac, uint8_t mac_index) {
   ErrCode ret;
 
   CanExtCmd_t cmd;
-  uint8_t     func_buffer[2*10 + 2];
+  uint8_t     func_buffer[2*11 + 2];
 
   Function_t    function;
-  message_id_t  message_id[10];
+  message_id_t  message_id[11];
 
   ret = ModuleBase::InitModule8p(mac, E0_DIR_PIN, 0);
   if (ret != E_SUCCESS)
@@ -131,11 +139,11 @@ ErrCode ToolHeadLaser::Init(MAC_t &mac, uint8_t mac_index) {
     if (function.id == MODULE_FUNC_GET_LASER_FOCUS) {
       message_id[i]     = canhost.RegisterFunction(function, CallbackAckLaserFocus);
       msg_id_get_focus_ = message_id[i];
-    }
-    else if (function.id == MODULE_FUNC_REPORT_LASER_GESTURE) {
+    } else if (function.id == MODULE_FUNC_REPORT_LASER_GESTURE) {
       message_id[i] = canhost.RegisterFunction(function, CallbackAckReportGesture);
-    }
-    else {
+    } else if (function.id == MODULE_FUNC_GET_NOZZLE_TEMP) {
+      message_id[i] = canhost.RegisterFunction(function, CallbackAckReportLaserTemperature);
+    } else {
       message_id[i] = canhost.RegisterFunction(function, NULL);
     }
 

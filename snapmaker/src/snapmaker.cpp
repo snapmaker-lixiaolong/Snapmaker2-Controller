@@ -27,6 +27,7 @@
 #include "service/system.h"
 #include "service/upgrade.h"
 #include "service/power_loss_recovery.h"
+#include "module/toolhead_laser.h"
 
 // marlin headers
 #include "src/module/endstops.h"
@@ -249,6 +250,8 @@ static void heartbeat_task(void *param) {
 
     if (++counter > 100) {
       counter = 0;
+
+      laser->PrintLaserTemperature();
 
       // do following every 1s
       upgrade.Check();

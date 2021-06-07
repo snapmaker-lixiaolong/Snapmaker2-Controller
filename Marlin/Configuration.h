@@ -690,6 +690,7 @@
 #define DEFAULT_AXIS_STEPS_PER_UNIT   { 400, 400, 400, 888.89, 212.21 }
 
 #define MODULE_LINEAR_PITCH_20        160
+#define MODULE_LINEAR_PITCH_10        320
 #define MODULE_LINEAR_PITCH_8         400
 
 /**
@@ -1043,14 +1044,16 @@
   extern float MAGNET_X_SPAN;
   extern float MAGNET_Y_SPAN;
 
-  // homeoffset for S/M/L
+  // homeoffset for S/M/L/L500
   extern float s_home_offset[XN];
   extern float m_home_offset[XN];
   extern float l_home_offset[XN];
+  extern float l500_home_offset[XN];
 
 #define S_HOME_OFFSET_DEFAULT {-7, -5, 0, 0}
 #define M_HOME_OFFSET_DEFAULT {-15.5, -7, 0, 0}
 #define L_HOME_OFFSET_DEFAULT {-19, -10, 0, 0}
+#define L500_HOME_OFFSET_DEFAULT {0, 0, 0, 0}
 #endif //DISABLE(SW_MACHINE_SIZE)
 
 // The size of the print bed
@@ -1342,7 +1345,7 @@
 #endif
 
 // Homing speeds (mm/m)
-#define HOMING_FEEDRATE_XY (50*60)
+#define HOMING_FEEDRATE_XY (20*60)
 #define HOMING_FEEDRATE_Z  (10*60)
 #define HOMING_FEEDRATE_B  (30*60)
 

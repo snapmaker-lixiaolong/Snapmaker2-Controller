@@ -249,6 +249,7 @@ millis_t max_inactive_time, // = 0
   float s_home_offset[XN] = S_HOME_OFFSET_DEFAULT;
   float m_home_offset[XN] = M_HOME_OFFSET_DEFAULT;
   float l_home_offset[XN] = L_HOME_OFFSET_DEFAULT;
+  float l500_home_offset[XN] = L500_HOME_OFFSET_DEFAULT;
 #endif //ENABLED(SW_MACHINE_SIZE)
 
 uint32_t GRID_MAX_POINTS_X;

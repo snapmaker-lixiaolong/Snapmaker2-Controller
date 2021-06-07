@@ -84,6 +84,7 @@ static void LinearCallbackEndstopX1(CanStdDataFrame_t &cmd) {
   {
   case MACHINE_SIZE_A250:
   case MACHINE_SIZE_A350:
+  case MACHINE_SIZE_L500:
     linear_p->SetEndstopBit(X_MIN, cmd.data[0]);
     break;
 
@@ -327,19 +328,48 @@ ErrCode Linear::PollEndstop(LinearAxisType axis) {
 
 
 MachineSize Linear::UpdateMachineSize() {
-  if (length_[LINEAR_AXIS_X1] != length_[LINEAR_AXIS_Y1] ||
-      length_[LINEAR_AXIS_Y1] != length_[LINEAR_AXIS_Z1]) {
+  // if (length_[LINEAR_AXIS_X1] != length_[LINEAR_AXIS_Y1] ||
+  //     length_[LINEAR_AXIS_Y1] != length_[LINEAR_AXIS_Z1]) {
 
-    systemservice.ThrowException(EHOST_MC, ETYPE_NO_HOST);
-    return (machine_size_ = MACHINE_SIZE_UNKNOWN);
-  }
+  //   systemservice.ThrowException(EHOST_MC, ETYPE_NO_HOST);
+  //   return (machine_size_ = MACHINE_SIZE_UNKNOWN);
+  // }
 
-  if (CheckModuleType() != E_SUCCESS) {
-    X_MAX_POS = 0;
-    Y_MAX_POS = 0;
-    Z_MAX_POS = 0;
-    systemservice.ThrowException(EHOST_MC, ETYPE_NO_HOST);
-    return (machine_size_ = MACHINE_SIZE_UNKNOWN);
+  // if (CheckModuleType() != E_SUCCESS) {
+  //   X_MAX_POS = 0;
+  //   Y_MAX_POS = 0;
+  //   Z_MAX_POS = 0;
+  //   systemservice.ThrowException(EHOST_MC, ETYPE_NO_HOST);
+  //   return (machine_size_ = MACHINE_SIZE_UNKNOWN);
+  // }
+
+  if (length_[LINEAR_AXIS_X1] > 350) {
+    LOG_I("Model: L500\n");
+    X_MAX_POS = 450;
+    Y_MAX_POS = 220;
+    Z_MAX_POS = 38;
+    X_HOME_DIR = -1;
+    X_DIR = true;
+    Y_HOME_DIR = 1;
+    Y_DIR = true;
+    Z_HOME_DIR = 1;
+    Z_DIR = false;
+
+    LOOP_XN(i) home_offset[i] = l500_home_offset[i];
+    machine_size_ = MACHINE_SIZE_L500;
+
+    float axis_steps_per_unit[] = DEFAULT_AXIS_STEPS_PER_UNIT;
+    axis_steps_per_unit[X_AXIS] = MODULE_LINEAR_PITCH_10;
+    axis_steps_per_unit[Y_AXIS] = MODULE_LINEAR_PITCH_10;
+    axis_steps_per_unit[Z_AXIS] = MODULE_LINEAR_PITCH_10;
+
+    LOOP_XYZ(i) {
+      planner.settings.axis_steps_per_mm[i] = axis_steps_per_unit[i];
+      SERIAL_ECHOLNPAIR("axis index:", i, "  pitch:", planner.settings.axis_steps_per_mm[i]);
+    }
+    planner.refresh_positioning();
+
+    goto out;
   }
 
   if (length_[LINEAR_AXIS_X1] < 200) {

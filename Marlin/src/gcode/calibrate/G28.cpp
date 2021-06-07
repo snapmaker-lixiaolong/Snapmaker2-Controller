@@ -27,6 +27,8 @@
 #include "../../module/stepper.h"
 #include "../../module/endstops.h"
 
+#include "../../../../snapmaker/src/module/toolhead_laser.h"
+
 #if HOTENDS > 1
   #include "../../module/tool_change.h"
 #endif
@@ -290,8 +292,11 @@ void GcodeSuite::G28(const bool always_home_all) {
         if (home_all || homeZ) homeaxis(Z_AXIS);
       #endif
     #else
-      if (Z_HOME_DIR > 0)
-        if (home_all || homeZ) homeaxis(Z_AXIS);
+      if (Z_HOME_DIR > 0) {
+        if (home_all || homeZ) laser->LaserGoHomeSync();
+        set_axis_is_at_home(Z_AXIS);
+        // if (home_all || homeZ) homeaxis(Z_AXIS);
+      }
     #endif // DISABLED(SW_MACHINE_SIZE)
 
     const float z_homing_height = (
@@ -408,7 +413,7 @@ void GcodeSuite::G28(const bool always_home_all) {
       set_axis_is_at_home(B_AXIS);
     }
     sync_plan_position();
-  
+
   #endif // !DELTA (G28)
 
   /**

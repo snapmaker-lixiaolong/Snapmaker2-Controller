@@ -27,6 +27,8 @@
 // marlin headers
 #include  "src/gcode/gcode.h"
 
+#include "../common/debug.h"
+
 #if (MOTHERBOARD == BOARD_SNAPMAKER_2_0)
 
 
@@ -76,6 +78,7 @@ void GcodeSuite::M3_M4(const bool is_M4) {
       laser->SetOutput(parser.value_float());
     }
     else {
+      LOG_I("laser on\n");
       laser->TurnOn();
     }
   }

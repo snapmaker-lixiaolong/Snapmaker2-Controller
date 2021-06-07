@@ -106,9 +106,12 @@ class ToolHeadLaser: public ModuleBase {
       msg_id_get_focus_ = MODULE_MESSAGE_ID_INVALID;
 
       timer_in_process_ = 0;
+
+      laser_temperature_ = 0;
     }
 
     ErrCode Init(MAC_t &mac, uint8_t mac_index);
+    void PrintLaserTemperature();
 
     void TurnOn();
     void TurnOff();
@@ -212,6 +215,8 @@ class ToolHeadLaser: public ModuleBase {
     bool yaw_updated_ = false;
     bool roll_updated_ = false;
     bool pitch_updated_ = false;
+
+    uint16_t laser_temperature_;
 };
 
 extern ToolHeadLaser *laser;

@@ -22,20 +22,12 @@
 
 #include "../gcode.h"
 #include "../../module/temperature.h"
+#include "../../../../snapmaker/src/module/toolhead_laser.h"
 
 /**
  * M105: Read hot end and bed temperature
  */
 void GcodeSuite::M105() {
 
-  const int8_t target_extruder = get_target_extruder_from_command();
-  if (target_extruder < 0) return;
-
-  #if HAS_TEMP_SENSOR
-    thermalManager.print_heater_states(target_extruder);
-  #else // !HAS_TEMP_SENSOR
-    SERIAL_ERROR_MSG(MSG_ERR_NO_THERMISTORS);
-  #endif
-
-  SERIAL_EOL();
+  laser->PrintLaserTemperature();
 }
