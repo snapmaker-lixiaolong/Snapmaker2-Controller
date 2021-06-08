@@ -25,6 +25,7 @@
 
 #include "../../Marlin.h"
 #include "../../../../snapmaker/src/module/toolhead_laser.h"
+#include "../../../../snapmaker/src/common/debug.h"
 
 #if BOTH(FWRETRACT, FWRETRACT_AUTORETRACT)
   #include "../../feature/fwretract.h"
@@ -72,7 +73,9 @@ void GcodeSuite::G0_G1(
     get_destination_from_command(); // For X Y Z E F
 
     // Z-axis movement first
-    laser->LaserMoveToDestinationAsync(destination[Z_AXIS], 30);
+    if (destination[Z_AXIS] != current_position[Z_AXIS]) {
+      laser->LaserMoveToDestinationSync(destination[Z_AXIS], 30);
+    }
 
     #ifdef G0_FEEDRATE
       if (fast_move) {

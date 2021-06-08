@@ -853,7 +853,7 @@ ErrCode ToolHeadLaser::LaserGoHomeSync() {
   cmd.data      = can_buffer;
   cmd.length    = index;
 
-  return canhost.SendStdCmdSync(cmd, 15000);
+  return canhost.SendStdCmdSync(cmd, 30000);
 }
 
 ErrCode ToolHeadLaser::LaserGoHomeAsync() {
