@@ -793,6 +793,8 @@ void GcodeSuite::execute_command(void) {
 
       case 2021: M2021(); break;
 
+      case 2022: M2022(); break;
+
       default: parser.unknown_command_error(); break;
     }
     break;

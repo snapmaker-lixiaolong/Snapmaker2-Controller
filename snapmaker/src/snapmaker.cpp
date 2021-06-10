@@ -251,8 +251,6 @@ static void heartbeat_task(void *param) {
     if (++counter > 100) {
       counter = 0;
 
-      laser->PrintLaserTemperature();
-
       // do following every 1s
       upgrade.Check();
       canhost.SendHeartbeat();

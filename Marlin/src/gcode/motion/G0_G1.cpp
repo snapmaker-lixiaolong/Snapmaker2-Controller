@@ -25,7 +25,6 @@
 
 #include "../../Marlin.h"
 #include "../../../../snapmaker/src/module/toolhead_laser.h"
-#include "../../../../snapmaker/src/common/debug.h"
 
 #if BOTH(FWRETRACT, FWRETRACT_AUTORETRACT)
   #include "../../feature/fwretract.h"

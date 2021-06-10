@@ -62,6 +62,13 @@ static void CallbackAckLaserFocus(CanStdDataFrame_t &cmd) {
   laser->focus(cmd.data[0]<<8 | cmd.data[1]);
 }
 
+static void CallbackAckReportSecurity(CanStdDataFrame_t &cmd) {
+  laser->current_security_status_.security_status = cmd.data[0];
+  laser->current_security_status_.switch_status = cmd.data[1];
+  laser->current_security_status_.roll = (cmd.data[2] << 8) | cmd.data[3];
+  laser->current_security_status_.pitch = (cmd.data[4] << 8) | cmd.data[5];
+}
+
 static void CallbackAckReportGesture(CanStdDataFrame_t &cmd) {
   switch (cmd.data[0]) {
     case 0:
@@ -143,6 +150,8 @@ ErrCode ToolHeadLaser::Init(MAC_t &mac, uint8_t mac_index) {
       message_id[i] = canhost.RegisterFunction(function, CallbackAckReportGesture);
     } else if (function.id == MODULE_FUNC_GET_NOZZLE_TEMP) {
       message_id[i] = canhost.RegisterFunction(function, CallbackAckReportLaserTemperature);
+    } else if (function.id == MODULE_FUNC_REPORT_SECURITY_STATUS) {
+      message_id[i] = canhost.RegisterFunction(function, CallbackAckReportSecurity);
     } else {
       message_id[i] = canhost.RegisterFunction(function, NULL);
     }
@@ -839,8 +848,12 @@ ErrCode ToolHeadLaser::UpdateGestureInfo (uint16_t interval) {
   return E_SUCCESS;
 }
 
-void ToolHeadLaser::SetDisplayInterval (uint16_t interval) {
-  display_interval_ = interval;
+void ToolHeadLaser::SetGestureDisplayInterval (uint16_t interval) {
+  gesture_display_interval_ = interval;
+}
+
+void ToolHeadLaser::SetLaserTempDisplayInterval (uint16_t interval) {
+  laser_temp_display_interval_ = interval;
 }
 
 ErrCode ToolHeadLaser::LaserGoHomeSync() {
@@ -914,12 +927,19 @@ void ToolHeadLaser::Process() {
 
   // timer_in_process_ = 0;
 
-  if (display_interval_ == 0) return;
+  if (laser_temp_display_interval_ != 0) {
+    if (laser_temp_time_elaspe_ + laser_temp_display_interval_ < millis()) {
+      laser_temp_time_elaspe_ = millis();
+      laser->PrintLaserTemperature();
+    }
+  }
 
-  if (time_elaspe_ + display_interval_ < millis()) {
-    time_elaspe_ = millis();
+  if (gesture_display_interval_ != 0) {
+    if (gesture_time_elaspe_ + gesture_display_interval_ < millis()) {
+      gesture_time_elaspe_ = millis();
 
-    LOG_I("yaw: %f, roll: %f, pitch: %f\n", yaw_, roll_, pitch_);
+      LOG_I("yaw: %f, roll: %f, pitch: %f\n", yaw_, roll_, pitch_);
+    }
   }
 
   // TryCloseFan();

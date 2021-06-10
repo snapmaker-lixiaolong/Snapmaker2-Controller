@@ -87,6 +87,13 @@ enum LaserCameraCommand {
   S_RECV_FAIL = 0xff,
 };
 
+typedef struct {
+  uint8_t security_status;
+  uint8_t switch_status;
+  uint16_t roll;
+  uint16_t pitch;
+}security_status_t;
+
 
 class ToolHeadLaser: public ModuleBase {
   public:
@@ -108,6 +115,16 @@ class ToolHeadLaser: public ModuleBase {
       timer_in_process_ = 0;
 
       laser_temperature_ = 0;
+
+      gesture_display_interval_ = 0;
+      gesture_time_elaspe_ = 0;
+      laser_temp_display_interval_ = 0;
+      laser_temp_time_elaspe_ = 0;
+
+      current_security_status_.security_status = 0;
+      current_security_status_.switch_status = 0;
+      current_security_status_.roll = 0;
+      current_security_status_.pitch = 0;
     }
 
     ErrCode Init(MAC_t &mac, uint8_t mac_index);
@@ -142,7 +159,8 @@ class ToolHeadLaser: public ModuleBase {
     ErrCode GetGesture(int16_t & roll, int16_t & pitch);
     ErrCode SetLaserPower(uint32_t power);         // ajust the DAC output voltage to control the laser output power in milliwatts
 
-    void SetDisplayInterval (uint16_t interval);
+    void SetGestureDisplayInterval (uint16_t interval);
+    void SetLaserTempDisplayInterval (uint16_t interval);
     ErrCode UpdateGestureInfo(uint16_t interval);
     ErrCode LaserGoHomeSync();
     ErrCode LaserGoHomeAsync();
@@ -205,8 +223,10 @@ class ToolHeadLaser: public ModuleBase {
     int16_t pitch_min_;
     int16_t pitch_max_;
 
-    uint16_t display_interval_;
-    uint32_t time_elaspe_;
+    uint16_t gesture_display_interval_;
+    uint32_t gesture_time_elaspe_;
+    uint16_t laser_temp_display_interval_;
+    uint32_t laser_temp_time_elaspe_;
 
   public:
     float yaw_;
@@ -217,6 +237,7 @@ class ToolHeadLaser: public ModuleBase {
     bool pitch_updated_ = false;
 
     uint16_t laser_temperature_;
+    security_status_t current_security_status_;
 };
 
 extern ToolHeadLaser *laser;
