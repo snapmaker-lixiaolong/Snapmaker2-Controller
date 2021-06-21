@@ -368,8 +368,8 @@ MachineSize Linear::UpdateMachineSize() {
     machine_size_ = MACHINE_SIZE_F500;
 
     float axis_steps_per_unit[] = DEFAULT_AXIS_STEPS_PER_UNIT;
-    axis_steps_per_unit[X_AXIS] = MODULE_LINEAR_PITCH_20;
-    axis_steps_per_unit[Y_AXIS] = MODULE_LINEAR_PITCH_20;
+    axis_steps_per_unit[X_AXIS] = MODULE_LINEAR_PITCH_10;
+    axis_steps_per_unit[Y_AXIS] = MODULE_LINEAR_PITCH_10;
     axis_steps_per_unit[Z_AXIS] = MODULE_LINEAR_PITCH_10;
 
     LOOP_XYZ(i) {
