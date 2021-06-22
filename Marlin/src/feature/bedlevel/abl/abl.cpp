@@ -466,7 +466,7 @@ uint8_t auto_probing(bool reply_screen, bool fast_leveling) {
   float z;
 
   int dir_idx = 0;
-  do_blocking_move_to_z(35, 10);
+  do_blocking_move_to_z(25, 10);
 
   for (int k = 0; k < GRID_MAX_POINTS_X * GRID_MAX_POINTS_Y; ++k) {
     LOG_I("Probing No. %d\n", k);

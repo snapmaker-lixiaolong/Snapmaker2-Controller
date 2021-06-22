@@ -292,8 +292,18 @@ void GcodeSuite::G28(const bool always_home_all) {
         if (home_all || homeZ) homeaxis(Z_AXIS);
       #endif
     #else
-      if (Z_HOME_DIR > 0)
-        if (home_all || homeZ) homeaxis(Z_AXIS);
+      if (Z_HOME_DIR > 0) {
+        if (home_all || homeZ) {
+          // do z raise first
+          if (!axes_homed(Z_AXIS)) {
+            bool relative_mode_temp = relative_mode;
+            relative_mode = true;
+            process_cmd_imd("G1 F1000 Z-50");
+            relative_mode = relative_mode_temp;
+          }
+          homeaxis(Z_AXIS);
+        }
+      }
     #endif // DISABLED(SW_MACHINE_SIZE)
 
     const float z_homing_height = (

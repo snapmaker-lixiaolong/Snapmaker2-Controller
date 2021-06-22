@@ -347,7 +347,7 @@ MachineSize Linear::UpdateMachineSize() {
     LOG_I("Model: F500\n");
     X_MAX_POS = 470;
     Y_MAX_POS = 520;
-    Z_MAX_POS = 525;
+    Z_MAX_POS = 500;
 
     X_HOME_DIR = -1;
     X_DIR = false;
