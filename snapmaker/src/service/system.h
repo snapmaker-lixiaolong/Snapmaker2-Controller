@@ -196,7 +196,7 @@ typedef struct {
   uint16_t  feedrate;    // mm/min
 
   uint32_t  laser_power_cnc_rpm; // laser_power (uint32_t)(float * 1000)
- 
+
   uint32_t b;  // B axis current logical position
 
   uint8_t system_state;
@@ -272,6 +272,7 @@ public:
   ErrCode GetMachineSize(SSTP_Event_t &event);
 
   ErrCode SendException(uint32_t fault);
+  ErrCode SendSecurityStatus();
   ErrCode FinishSystemStatusChange(uint8_t op_code, uint8_t result);
 
   ErrCode CallbackPreQS(QuickStopSource source);

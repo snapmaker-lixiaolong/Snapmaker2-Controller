@@ -89,7 +89,7 @@ enum LaserCameraCommand {
 
 typedef struct {
   uint8_t security_status;
-  uint8_t switch_status;
+  uint8_t laser_temp;
   uint16_t roll;
   uint16_t pitch;
 }security_status_t;
@@ -122,7 +122,7 @@ class ToolHeadLaser: public ModuleBase {
       laser_temp_time_elaspe_ = 0;
 
       current_security_status_.security_status = 0;
-      current_security_status_.switch_status = 0;
+      current_security_status_.laser_temp = 0;
       current_security_status_.roll = 0;
       current_security_status_.pitch = 0;
     }
@@ -153,6 +153,8 @@ class ToolHeadLaser: public ModuleBase {
     ErrCode GetCameraBtMAC(SSTP_Event_t &event);
     ErrCode ReadBluetoothVer();
     void SetCameraLight(uint8_t state);
+
+    ErrCode SendSecurityStatus();
 
     ErrCode SetAutoFocusLight(uint8_t state);
     ErrCode SetLimitGesture(int16_t roll_min, int16_t roll_max, int16_t pitch_min, int16_t pitch_max);

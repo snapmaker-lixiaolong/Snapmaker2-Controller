@@ -64,9 +64,13 @@ static void CallbackAckLaserFocus(CanStdDataFrame_t &cmd) {
 
 static void CallbackAckReportSecurity(CanStdDataFrame_t &cmd) {
   laser->current_security_status_.security_status = cmd.data[0];
-  laser->current_security_status_.switch_status = cmd.data[1];
+  laser->current_security_status_.laser_temp = cmd.data[1];
   laser->current_security_status_.roll = (cmd.data[2] << 8) | cmd.data[3];
   laser->current_security_status_.pitch = (cmd.data[4] << 8) | cmd.data[5];
+
+  if (laser->current_security_status_.security_status != 0) {
+    quickstop.Trigger(QS_SOURCE_SECURITY, true);
+  }
 }
 
 static void CallbackAckReportGesture(CanStdDataFrame_t &cmd) {
@@ -728,6 +732,23 @@ void ToolHeadLaser::SetCameraLight(uint8_t state) {
   event.length = 1;
   SetBluetoothInfo(M_SET_CAMERA_LIGHT, event.data, event.length);
   LOG_I("set Laser Camera light:%d!\n", state);
+}
+
+ErrCode ToolHeadLaser::SendSecurityStatus() {
+  SSTP_Event_t event = {EID_SYS_CTRL_ACK, SYSCTL_OPC_SECURITY_STATUS};
+  uint8_t buff[6];
+
+  buff[0] = laser->current_security_status_.security_status;
+  buff[1] = laser->current_security_status_.laser_temp;
+  buff[2] = laser->current_security_status_.roll >> 8;
+  buff[3] = laser->current_security_status_.roll & 0xff;
+  buff[4] = laser->current_security_status_.pitch >> 8;
+  buff[5] = laser->current_security_status_.pitch & 0xff;
+
+  event.length = 6;
+  event.data = buff;
+
+  return hmi.Send(event);
 }
 
 ErrCode ToolHeadLaser::SetAutoFocusLight(uint8_t state) {

@@ -46,6 +46,7 @@ enum QuickStopSource : uint8_t {
   QS_SOURCE_STOP,
   QS_SOURCE_POWER_LOSS,
   QS_SOURCE_STOP_BUTTON,
+  QS_SOURCE_SECURITY,
 
   QS_SOURCE_INVALID
 };
@@ -67,6 +68,7 @@ class QuickStopService {
   private:
     void Park();
     void TurnOffPower();
+    void HandleProtection();
 
   private:
     QuickStopState state_ = QS_STA_IDLE;

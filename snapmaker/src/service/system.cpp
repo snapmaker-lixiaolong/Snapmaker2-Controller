@@ -1696,6 +1696,12 @@ ErrCode SystemService::SendException(uint32_t fault) {
   return hmi.Send(event);
 }
 
+ErrCode SystemService::SendSecurityStatus () {
+  if (ModuleBase::toolhead() == MODULE_TOOLHEAD_LASER) {
+    laser->SendSecurityStatus();
+  }
+}
+
 
 ErrCode SystemService::ChangeSystemStatus(SSTP_Event_t &event) {
   ErrCode err = E_SUCCESS;
@@ -1783,7 +1789,6 @@ ErrCode SystemService::FinishSystemStatusChange(uint8_t op_code, uint8_t result)
 
   return hmi.Send(event);
 }
-
 
 ErrCode SystemService::SendLastLine(SSTP_Event_t &event) {
   uint8_t buff[6];
@@ -2157,6 +2162,10 @@ ErrCode SystemService::CallbackPreQS(QuickStopSource source) {
     PreProcessStop();
     break;
 
+  case QS_SOURCE_SECURITY:
+    PreProcessStop();
+    break;
+
   default:
     break;
   }
@@ -2196,6 +2205,14 @@ ErrCode SystemService::CallbackPostQS(QuickStopSource source) {
     cur_status_ = SYSTAT_IDLE;
 
     LOG_I("Finish stop\n\n");
+    break;
+
+  case QS_SOURCE_SECURITY:
+    // ack HMI
+    SendException(fault_flag_);
+    SendSecurityStatus();
+
+    LOG_I("Finish handle protection\n");
     break;
 
   default:
