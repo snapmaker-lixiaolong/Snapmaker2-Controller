@@ -34,6 +34,7 @@
 #include "src/module/motion.h"
 #include "src/module/planner.h"
 #include "rotary_module.h"
+#include "../service/system.h"
 
 
 #define LASER_CLOSE_FAN_DELAY     (120)
@@ -68,37 +69,58 @@ static void CallbackAckReportSecurity(CanStdDataFrame_t &cmd) {
   laser->current_security_status_.roll = (cmd.data[2] << 8) | cmd.data[3];
   laser->current_security_status_.pitch = (cmd.data[4] << 8) | cmd.data[5];
 
+  if (systemservice.GetCurrentStage() != SYSTAGE_WORK && systemservice.GetCurrentStage() != SYSTAGE_PAUSE) {
+    return;
+  }
+
   if (laser->current_security_status_.security_status != 0) {
     quickstop.Trigger(QS_SOURCE_SECURITY, true);
   }
 }
 
 static void CallbackAckReportGesture(CanStdDataFrame_t &cmd) {
-  switch (cmd.data[0]) {
-    case 0:
-      ((uint8_t *)&laser->yaw_)[0] = cmd.data[1];
-      ((uint8_t *)&laser->yaw_)[1] = cmd.data[2];
-      ((uint8_t *)&laser->yaw_)[2] = cmd.data[3];
-      ((uint8_t *)&laser->yaw_)[3] = cmd.data[4];
-      laser->yaw_updated_ = true;
-      break;
-    case 1:
-      ((uint8_t *)&laser->roll_)[0] = cmd.data[1];
-      ((uint8_t *)&laser->roll_)[1] = cmd.data[2];
-      ((uint8_t *)&laser->roll_)[2] = cmd.data[3];
-      ((uint8_t *)&laser->roll_)[3] = cmd.data[4];
-      laser->roll_updated_ = true;
-      break;
-    case 2:
-      ((uint8_t *)&laser->pitch_)[0] = cmd.data[1];
-      ((uint8_t *)&laser->pitch_)[1] = cmd.data[2];
-      ((uint8_t *)&laser->pitch_)[2] = cmd.data[3];
-      ((uint8_t *)&laser->pitch_)[3] = cmd.data[4];
-      laser->pitch_updated_ = true;
-      break;
-    default:
-      break;
-  }
+  ((uint8_t *)&laser->roll_)[0]  = cmd.data[0];
+  ((uint8_t *)&laser->roll_)[1]  = cmd.data[1];
+  ((uint8_t *)&laser->roll_)[2]  = cmd.data[2];
+  ((uint8_t *)&laser->roll_)[3]  = cmd.data[3];
+  ((uint8_t *)&laser->pitch_)[0] = cmd.data[4];
+  ((uint8_t *)&laser->pitch_)[1] = cmd.data[5];
+  ((uint8_t *)&laser->pitch_)[2] = cmd.data[6];
+  ((uint8_t *)&laser->pitch_)[3] = cmd.data[7];
+  laser->gesture_updated_ = true;
+}
+
+ErrCode ToolHeadLaser::SendGestureToHmi() {
+  if (laser->gesture_updated_ == false) return E_SUCCESS;
+
+  laser->gesture_updated_ = false;
+
+  SSTP_Event_t event = {EID_GESTURE_ACK};
+  uint8_t  buff[8];
+  uint8_t index = 0;
+
+  buff[index++] = ((uint8_t *)&laser->roll_)[3];
+  buff[index++] = ((uint8_t *)&laser->roll_)[2];
+  buff[index++] = ((uint8_t *)&laser->roll_)[1];
+  buff[index++] = ((uint8_t *)&laser->roll_)[0];
+  buff[index++] = ((uint8_t *)&laser->pitch_)[3];
+  buff[index++] = ((uint8_t *)&laser->pitch_)[2];
+  buff[index++] = ((uint8_t *)&laser->pitch_)[1];
+  buff[index++] = ((uint8_t *)&laser->pitch_)[0];
+
+  event.length = index;
+  event.data   = buff;
+  return hmi.Send(event);
+}
+
+void ToolHeadLaser::GestureConfirmed() {
+  CanStdFuncCmd_t cmd;
+
+  cmd.id     = MODULE_FUNC_SET_INITIAL_GESTURE;
+  cmd.data   = NULL;
+  cmd.length = 0;
+
+  canhost.SendStdCmd(cmd, 0);
 }
 
 static void CallbackAckReportLaserTemperature(CanStdDataFrame_t &cmd) {
@@ -114,10 +136,10 @@ ErrCode ToolHeadLaser::Init(MAC_t &mac, uint8_t mac_index) {
   ErrCode ret;
 
   CanExtCmd_t cmd;
-  uint8_t     func_buffer[2*11 + 2];
+  uint8_t     func_buffer[2*12 + 2];
 
   Function_t    function;
-  message_id_t  message_id[11];
+  message_id_t  message_id[12];
 
   ret = ModuleBase::InitModule8p(mac, E0_DIR_PIN, 0);
   if (ret != E_SUCCESS)
@@ -842,10 +864,6 @@ ErrCode ToolHeadLaser::UpdateGestureInfo (uint16_t interval) {
   uint16_t delay_count = 100;
   uint8_t buff[2] = {0};
 
-  yaw_updated_   = false;
-  roll_updated_  = false;
-  pitch_updated_ = false;
-
   buff[0] = (interval >> 8) & 0xff;
   buff[1] = interval & 0xff;
 
@@ -962,6 +980,9 @@ void ToolHeadLaser::Process() {
       LOG_I("yaw: %f, roll: %f, pitch: %f\n", yaw_, roll_, pitch_);
     }
   }
+
+  // send data to the screen asynchronously
+  SendGestureToHmi();
 
   // TryCloseFan();
 }

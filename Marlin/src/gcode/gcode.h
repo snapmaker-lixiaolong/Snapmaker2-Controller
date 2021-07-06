@@ -897,6 +897,8 @@ private:
 
   static void M2022();
 
+  static void M2023();
+
   static void T(const uint8_t tool_index);
 
 };

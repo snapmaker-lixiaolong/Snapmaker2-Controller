@@ -39,6 +39,8 @@
 #define EID_SYS_CTRL_REQ      7
 #define EID_SYS_CTRL_ACK      8
 
+#define EID_GESTURE_ACK       22
+
 enum SysControlOpc: uint8_t {
   SYSCTL_OPC_UNUSED_0 = 0,
   SYSCTL_OPC_GET_STATUES,

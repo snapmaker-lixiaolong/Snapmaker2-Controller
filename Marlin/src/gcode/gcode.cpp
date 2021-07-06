@@ -795,6 +795,8 @@ void GcodeSuite::execute_command(void) {
 
       case 2022: M2022(); break;
 
+      case 2023: M2023(); break;
+
       default: parser.unknown_command_error(); break;
     }
     break;
