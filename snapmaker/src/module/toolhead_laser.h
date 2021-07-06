@@ -125,6 +125,9 @@ class ToolHeadLaser: public ModuleBase {
       current_security_status_.laser_temp = 0;
       current_security_status_.roll = 0;
       current_security_status_.pitch = 0;
+
+      gesture_updated_ = false;
+      need_to_turnoff_laser_ = false;
     }
 
     ErrCode Init(MAC_t &mac, uint8_t mac_index);
@@ -157,6 +160,7 @@ class ToolHeadLaser: public ModuleBase {
     ErrCode SendSecurityStatus();
     ErrCode SendGestureToHmi();
     void GestureConfirmed();
+    void TurnoffLaserIfNeeded();
 
     ErrCode SetAutoFocusLight(uint8_t state);
     ErrCode SetLimitGesture(int16_t roll_min, int16_t roll_max, int16_t pitch_min, int16_t pitch_max);
@@ -236,7 +240,8 @@ class ToolHeadLaser: public ModuleBase {
     float yaw_;
     float roll_;          // current roll value
     float pitch_;         // current pitch value
-    bool gesture_updated_ = false;
+    bool gesture_updated_;
+    bool need_to_turnoff_laser_;
 
     uint16_t laser_temperature_;
     security_status_t current_security_status_;

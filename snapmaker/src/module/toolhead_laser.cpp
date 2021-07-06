@@ -69,12 +69,11 @@ static void CallbackAckReportSecurity(CanStdDataFrame_t &cmd) {
   laser->current_security_status_.roll = (cmd.data[2] << 8) | cmd.data[3];
   laser->current_security_status_.pitch = (cmd.data[4] << 8) | cmd.data[5];
 
-  if (systemservice.GetCurrentStage() != SYSTAGE_WORK && systemservice.GetCurrentStage() != SYSTAGE_PAUSE) {
-    return;
-  }
-
   if (laser->current_security_status_.security_status != 0) {
-    quickstop.Trigger(QS_SOURCE_SECURITY, true);
+    laser->need_to_turnoff_laser_ = true;
+    if (systemservice.GetCurrentStage() == SYSTAGE_WORK || systemservice.GetCurrentStage() == SYSTAGE_PAUSE) {
+      quickstop.Trigger(QS_SOURCE_SECURITY, true);
+    }
   }
 }
 
@@ -88,6 +87,13 @@ static void CallbackAckReportGesture(CanStdDataFrame_t &cmd) {
   ((uint8_t *)&laser->pitch_)[2] = cmd.data[6];
   ((uint8_t *)&laser->pitch_)[3] = cmd.data[7];
   laser->gesture_updated_ = true;
+}
+
+void ToolHeadLaser::TurnoffLaserIfNeeded() {
+  if (laser->need_to_turnoff_laser_) {
+    laser->need_to_turnoff_laser_ = false;
+    TurnOff();
+  }
 }
 
 ErrCode ToolHeadLaser::SendGestureToHmi() {
@@ -210,8 +216,12 @@ void ToolHeadLaser::tim_pwm(uint16_t pwm) {
 }
 
 void ToolHeadLaser::TurnOn() {
-  if (state_ == TOOLHEAD_LASER_STATE_OFFLINE)
+  // if (state_ == TOOLHEAD_LASER_STATE_OFFLINE)
+  //   return;
+
+  if (laser->device_id_ == MODULE_DEVICE_ID_HIGH_POWER_LASER && laser->current_security_status_.security_status != 0) {
     return;
+  }
 
   state_ = TOOLHEAD_LASER_STATE_ON;
   CheckFan(power_pwm_);
@@ -220,8 +230,8 @@ void ToolHeadLaser::TurnOn() {
 
 
 void ToolHeadLaser::TurnOff() {
-  if (state_ == TOOLHEAD_LASER_STATE_OFFLINE)
-    return;
+  // if (state_ == TOOLHEAD_LASER_STATE_OFFLINE)
+  //   return;
 
   state_ = TOOLHEAD_LASER_STATE_OFF;
   CheckFan(0);
@@ -230,6 +240,10 @@ void ToolHeadLaser::TurnOff() {
 
 
 void ToolHeadLaser::SetOutput(float power) {
+  if (laser->device_id_ == MODULE_DEVICE_ID_HIGH_POWER_LASER && laser->current_security_status_.security_status != 0) {
+    return;
+  }
+
   SetPower(power);
   TurnOn();
 }
@@ -239,8 +253,8 @@ void ToolHeadLaser::SetPower(float power) {
   int   integer;
   float decimal;
 
-  if (state_ == TOOLHEAD_LASER_STATE_OFFLINE)
-    return;
+  // if (state_ == TOOLHEAD_LASER_STATE_OFFLINE)
+  //   return;
 
   power_val_ = power;
 
@@ -983,6 +997,8 @@ void ToolHeadLaser::Process() {
 
   // send data to the screen asynchronously
   SendGestureToHmi();
+
+  TurnoffLaserIfNeeded();
 
   // TryCloseFan();
 }
